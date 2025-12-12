@@ -3,7 +3,9 @@ import '../models/wishlist_model.dart';
 import 'api_client.dart';
 
 class WishlistService {
-  final ApiClient _apiClient = ApiClient();
+  final ApiClient _apiClient;
+
+  WishlistService(this._apiClient);
 
   // ========== USER WISHLIST ROUTES ==========
 

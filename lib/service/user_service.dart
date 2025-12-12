@@ -6,7 +6,9 @@ import '../models/user_model.dart';
 import 'api_client.dart';
 
 class UserService {
-  final ApiClient _apiClient = ApiClient();
+  final ApiClient _apiClient;
+
+  UserService(this._apiClient);
 
   // ========== USER PROFILE ROUTES ==========
 

@@ -5,7 +5,9 @@ import '../constants/api_constants.dart';
 import 'api_client.dart';
 
 class UploadService {
-  final ApiClient _apiClient = ApiClient();
+  final ApiClient _apiClient;
+
+  UploadService(this._apiClient);
 
   // ========== UPLOAD ROUTES (Admin only) ==========
 

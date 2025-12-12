@@ -3,7 +3,9 @@ import '../models/review_model.dart';
 import 'api_client.dart';
 
 class ReviewService {
-  final ApiClient _apiClient = ApiClient();
+  final ApiClient _apiClient;
+
+  ReviewService(this._apiClient);
 
   // ========== PUBLIC ROUTES ==========
 

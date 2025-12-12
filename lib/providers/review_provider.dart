@@ -3,7 +3,9 @@ import '../models/review_model.dart';
 import '../service/review_service.dart';
 
 class ReviewProvider with ChangeNotifier {
-  final ReviewService _reviewService = ReviewService();
+  final ReviewService _reviewService;
+
+  ReviewProvider(this._reviewService);
 
   // State
   List<ReviewModel> _reviews = [];
