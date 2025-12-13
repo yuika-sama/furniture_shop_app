@@ -6,7 +6,9 @@ import '../service/auth_service.dart';
 /// Auth State Provider
 /// Quản lý trạng thái authentication trong app
 class AuthProvider with ChangeNotifier {
-  final AuthService _authService = AuthService(ApiClient());
+  final AuthService _authService;
+
+  AuthProvider(AuthService authService) : _authService = authService;
   
   UserModel? _currentUser;
   bool _isLoading = false;

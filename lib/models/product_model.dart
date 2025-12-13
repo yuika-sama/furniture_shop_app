@@ -86,13 +86,25 @@ class ProductModel {
           : json['category']?['_id'] ?? '',
       category: json['category'] is Map 
           ? CategoryModel.fromJson(json['category']) 
-          : null,
+          : (json['category'] is String && json['category'] != null)
+              ? CategoryModel(
+                  id: json['category'],
+                  name: json['category'],
+                  slug: json['category'].toString().toLowerCase().replaceAll(' ', '-'),
+                )
+              : null,
       brandId: json['brand'] is String 
           ? json['brand'] 
           : json['brand']?['_id'],
       brand: json['brand'] is Map 
           ? BrandModel.fromJson(json['brand']) 
-          : null,
+          : (json['brand'] is String && json['brand'] != null)
+              ? BrandModel(
+                  id: json['brand'],
+                  name: json['brand'],
+                  slug: json['brand'].toString().toLowerCase().replaceAll(' ', '-'),
+                )
+              : null,
       stock: json['stock'] ?? 0,
       soldCount: json['soldCount'] ?? 0,
       dimensions: json['dimensions'] != null 
@@ -222,10 +234,32 @@ class Dimensions {
 
   factory Dimensions.fromJson(Map<String, dynamic> json) {
     return Dimensions(
-      width: json['width']?.toDouble(),
-      height: json['height']?.toDouble(),
-      length: json['length']?.toDouble(),
+      width: _parseDoubleValue(json['width']),
+      height: _parseDoubleValue(json['height']),
+      length: _parseDoubleValue(json['length']),
     );
+  }
+
+  /// Parse value that can be number, string, or range like "1140-1220"
+  static double? _parseDoubleValue(dynamic value) {
+    if (value == null) return null;
+    
+    if (value is num) {
+      return value.toDouble();
+    }
+    
+    if (value is String) {
+      // Handle range like "1140-1220" - take the first value
+      if (value.contains('-')) {
+        final parts = value.split('-');
+        if (parts.isNotEmpty) {
+          return double.tryParse(parts[0].trim());
+        }
+      }
+      return double.tryParse(value);
+    }
+    
+    return null;
   }
 
   Map<String, dynamic> toJson() {
@@ -240,6 +274,11 @@ class Dimensions {
     if (width == null && height == null && length == null) {
       return 'Chưa có thông tin';
     }
-    return '${width ?? 0} x ${height ?? 0} x ${length ?? 0} cm';
+    
+    final w = width?.toInt() ?? 0;
+    final h = height?.toInt() ?? 0;
+    final l = length?.toInt() ?? 0;
+    
+    return 'R: $w x C: $h x D: $l mm';
   }
 }

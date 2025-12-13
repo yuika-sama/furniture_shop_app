@@ -108,25 +108,60 @@ class _ProductCardState extends State<ProductCard>
                           topLeft: Radius.circular(16),
                           topRight: Radius.circular(16),
                         ),
-                        child: Image.asset(
-                          widget.imageUrl,
-                          fit: BoxFit.cover,
-                          width: double.infinity,
-                          height: 180,
-                          errorBuilder: (context, error, stackTrace) {
-                            return Container(
-                              color: AppTheme.beige100,
-                              height: 180,
-                              child: const Center(
-                                child: Icon(
-                                  Icons.chair_outlined,
-                                  size: 64,
-                                  color: AppTheme.char300,
-                                ),
+                        child: widget.imageUrl.startsWith('http')
+                            ? Image.network(
+                                widget.imageUrl,
+                                fit: BoxFit.cover,
+                                width: double.infinity,
+                                height: 180,
+                                loadingBuilder: (context, child, loadingProgress) {
+                                  if (loadingProgress == null) return child;
+                                  return Container(
+                                    color: AppTheme.beige100,
+                                    height: 180,
+                                    child: Center(
+                                      child: CircularProgressIndicator(
+                                        value: loadingProgress.expectedTotalBytes != null
+                                            ? loadingProgress.cumulativeBytesLoaded /
+                                                loadingProgress.expectedTotalBytes!
+                                            : null,
+                                      ),
+                                    ),
+                                  );
+                                },
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Container(
+                                    color: AppTheme.beige100,
+                                    height: 180,
+                                    child: const Center(
+                                      child: Icon(
+                                        Icons.chair_outlined,
+                                        size: 64,
+                                        color: AppTheme.char300,
+                                      ),
+                                    ),
+                                  );
+                                },
+                              )
+                            : Image.asset(
+                                widget.imageUrl,
+                                fit: BoxFit.cover,
+                                width: double.infinity,
+                                height: 180,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Container(
+                                    color: AppTheme.beige100,
+                                    height: 180,
+                                    child: const Center(
+                                      child: Icon(
+                                        Icons.chair_outlined,
+                                        size: 64,
+                                        color: AppTheme.char300,
+                                      ),
+                                    ),
+                                  );
+                                },
                               ),
-                            );
-                          },
-                        ),
                       ),
                     ),
                     // Favorite button
@@ -191,15 +226,15 @@ class _ProductCardState extends State<ProductCard>
 
               // Product Info - Fixed height
               Container(
-                height: 110,
-                padding: const EdgeInsets.all(12.0),
+                height: 100,
+                padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     // Category and Brand - Fixed height
                     SizedBox(
-                      height: 16,
+                      height: 14,
                       child: Text(
                         widget.brand != null
                             ? '${widget.category} • ${widget.brand}'
@@ -207,40 +242,39 @@ class _ProductCardState extends State<ProductCard>
                         style: const TextStyle(
                           color: AppTheme.info,
                           fontWeight: FontWeight.w500,
-                          fontSize: 12,
+                          fontSize: 11,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 4),
                     // Product Title - Fixed height for 2 lines
                     SizedBox(
-                      height: 40,
+                      height: 38,
                       child: Text(
                         widget.title,
                         style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           color: AppTheme.char900,
-                          fontSize: 14,
+                          fontSize: 13,
                           height: 1.3,
                         ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const Spacer(),
                     // Price - Fixed height
-                    SizedBox(
-                      height: 20,
-                      child: Text(
-                        '${_formatPrice(widget.price)} ₫',
-                        style: const TextStyle(
-                          color: AppTheme.primary500,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 15,
-                        ),
+                    Text(
+                      '${_formatPrice(widget.price)} ₫',
+                      style: const TextStyle(
+                        color: AppTheme.primary500,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),

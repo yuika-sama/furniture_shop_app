@@ -18,6 +18,7 @@ import 'service/wishlist_service.dart';
 // Providers
 import 'providers/auth_provider.dart';
 import 'providers/cart_provider.dart';
+import 'providers/category_provider.dart';
 import 'providers/order_provider.dart';
 import 'providers/product_provider.dart';
 import 'providers/promotion_provider.dart';
@@ -81,29 +82,52 @@ class MyApp extends StatelessWidget {
         ProxyProvider<ApiClient, WishlistService>(
           update: (_, apiClient, __) => WishlistService(apiClient),
         ),
+
+        // Providers - State Management (Order matters!)
+        // 1. AuthProvider must be first
+        ChangeNotifierProxyProvider<AuthService, AuthProvider>(
+          create: (_) => AuthProvider(AuthService(ApiClient())),
+          update: (_, service, previous) => previous ?? AuthProvider(service),
+        ),
+        
+        // 2. Independent providers
+        ChangeNotifierProxyProvider<CategoryService, CategoryProvider>(
+          create: (_) => CategoryProvider(categoryService: CategoryService(ApiClient())),
+          update: (_, service, previous) => previous ?? CategoryProvider(categoryService: service),
+        ),
+        ChangeNotifierProxyProvider<ProductService, ProductProvider>(
+          create: (_) => ProductProvider(productService: ProductService(ApiClient())),
+          update: (_, service, previous) => previous ?? ProductProvider(productService: service),
+        ),
         ChangeNotifierProxyProvider<PromotionService, PromotionProvider>(
-          create: (context) => PromotionProvider(
-            Provider.of<PromotionService>(context, listen: false),
-          ),
+          create: (_) => PromotionProvider(PromotionService(ApiClient())),
           update: (_, service, previous) => previous ?? PromotionProvider(service),
         ),
         ChangeNotifierProxyProvider<ReviewService, ReviewProvider>(
-          create: (context) => ReviewProvider(
-            Provider.of<ReviewService>(context, listen: false),
-          ),
+          create: (_) => ReviewProvider(ReviewService(ApiClient())),
           update: (_, service, previous) => previous ?? ReviewProvider(service),
         ),
         ChangeNotifierProxyProvider<UserService, UserProvider>(
-          create: (context) => UserProvider(
-            Provider.of<UserService>(context, listen: false),
-          ),
+          create: (_) => UserProvider(UserService(ApiClient())),
           update: (_, service, previous) => previous ?? UserProvider(service),
         ),
         ChangeNotifierProxyProvider<WishlistService, WishlistProvider>(
-          create: (context) => WishlistProvider(
-            Provider.of<WishlistService>(context, listen: false),
-          ),
+          create: (_) => WishlistProvider(WishlistService(ApiClient())),
           update: (_, service, previous) => previous ?? WishlistProvider(service),
+        ),
+        ChangeNotifierProxyProvider<OrderService, OrderProvider>(
+          create: (_) => OrderProvider(orderService: OrderService(ApiClient())),
+          update: (_, orderService, previous) =>
+              previous ?? OrderProvider(orderService: orderService),
+        ),
+        
+        // 3. CartProvider depends on AuthProvider (must come after AuthProvider)
+        ChangeNotifierProxyProvider2<CartService, AuthProvider, CartProvider>(
+          create: (_) => CartProvider(
+            cartService: CartService(ApiClient()),
+          ),
+          update: (_, cartService, authProvider, previous) =>
+              previous ?? CartProvider(cartService: cartService, authProvider: authProvider),
         ),
       ],
       child: MaterialApp(

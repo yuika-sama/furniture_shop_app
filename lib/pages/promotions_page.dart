@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../constants/app_theme.dart';
+import '../models/promotion_model.dart';
 import '../providers/promotion_provider.dart';
 import '../components/app_bar_actions.dart';
 
@@ -42,7 +43,7 @@ class _PromotionsPageState extends State<PromotionsPage>
         headerSliverBuilder: (context, innerBoxIsScrolled) {
           return [
             SliverAppBar(
-              title: const Text('Khuyến mãi & Thông báo'),
+              title: const Text('Khuyến mãi & Hướng dẫn'),
               floating: true,
               snap: true,
               actions: const [
@@ -50,15 +51,16 @@ class _PromotionsPageState extends State<PromotionsPage>
               ],
               bottom: TabBar(
                 controller: _tabController,
-                indicatorColor: Colors.white,
+                labelColor: Colors.white,
+                unselectedLabelColor: Colors.white,
                 tabs: const [
                   Tab(
                     icon: Icon(Icons.local_offer),
                     text: 'Khuyến mãi',
                   ),
                   Tab(
-                    icon: Icon(Icons.notifications),
-                    text: 'Thông báo',
+                    icon: Icon(Icons.help_outline),
+                    text: 'Hướng dẫn',
                   ),
                 ],
               ),
@@ -69,7 +71,7 @@ class _PromotionsPageState extends State<PromotionsPage>
           controller: _tabController,
           children: [
             _buildPromotionsList(),
-            _buildNotificationsList(),
+            _buildGuideList(),
           ],
         ),
       ),
@@ -128,213 +130,283 @@ class _PromotionsPageState extends State<PromotionsPage>
     );
   }
 
-  Widget _buildPromotionCard(dynamic promotion) {
-    // Mock promotion card - will be replaced with actual data
+  Widget _buildPromotionCard(PromotionModel promotion) {
     return Card(
+      elevation: 2,
       child: InkWell(
         onTap: () {
           _showPromotionDetails(promotion);
         },
         borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Row(
-            children: [
-              Container(
-                width: 80,
-                height: 80,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [AppTheme.warning, AppTheme.warning.withValues(alpha: 0.7)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          child: IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Discount badge
+                Container(
+                  width: 70,
+                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [AppTheme.primary400, AppTheme.primary600],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(
-                        '20%',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
+                      Flexible(
+                        child: Text(
+                          promotion.discountText,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
+                      const SizedBox(height: 2),
                       Text(
                         'OFF',
                         style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
+                          color: Colors.white.withOpacity(0.9),
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ],
                   ),
                 ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Giảm giá 20% cho đơn từ 5 triệu',
-                      style: Theme.of(context).textTheme.titleMedium,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 4),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppTheme.beige100,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        'SUMMER2025',
-                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                              color: AppTheme.primary500,
-                              fontWeight: FontWeight.bold,
+                const SizedBox(width: 12),
+                // Content
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Title and status
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              promotion.code,
+                              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14,
+                                  ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.access_time,
-                          size: 14,
-                          color: AppTheme.char500,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          'HSD: 31/12/2025',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: AppTheme.char500,
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: promotion.isValid
+                                  ? AppTheme.success
+                                  : AppTheme.char300,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              promotion.statusText,
+                              style: TextStyle(
+                                color: promotion.isValid
+                                    ? Colors.white
+                                    : AppTheme.char600,
+                                fontSize: 9,
+                                fontWeight: FontWeight.w600,
                               ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      // Description
+                      Text(
+                        promotion.description,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              fontSize: 13,
+                            ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 6),
+                      // Min spend
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.shopping_cart_outlined,
+                            size: 12,
+                            color: AppTheme.char500,
+                          ),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              promotion.minSpendText,
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: AppTheme.char500,
+                                    fontSize: 11,
+                                  ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 3),
+                      // Days remaining
+                      if (promotion.daysRemaining != null && promotion.daysRemaining! > 0)
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.access_time,
+                              size: 12,
+                              color: AppTheme.char500,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Còn ${promotion.daysRemaining} ngày',
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: AppTheme.char500,
+                                    fontSize: 11,
+                                  ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-              const Icon(
-                Icons.arrow_forward_ios,
-                size: 16,
-                color: AppTheme.char400,
-              ),
-            ],
+                const SizedBox(width: 8),
+                // Arrow
+                Icon(
+                  Icons.arrow_forward_ios,
+                  size: 14,
+                  color: AppTheme.char400,
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildNotificationsList() {
-    final notifications = [
+  Widget _buildGuideList() {
+    final guideSteps = [
       {
-        'title': 'Đơn hàng đã được giao',
-        'message': 'Đơn hàng #DH001 đã được giao thành công',
-        'time': '2 giờ trước',
-        'icon': Icons.check_circle,
-        'color': AppTheme.success,
-        'read': false,
+        'step': '1',
+        'title': 'Sao chép mã giảm giá bạn muốn sử dụng',
       },
       {
-        'title': 'Khuyến mãi mới',
-        'message': 'Giảm giá 30% cho bộ sưu tập mùa hè',
-        'time': '1 ngày trước',
-        'icon': Icons.local_offer,
-        'color': AppTheme.warning,
-        'read': false,
+        'step': '2',
+        'title': 'Thêm sản phẩm vào giỏ hàng và tiến hành thanh toán',
       },
       {
-        'title': 'Đơn hàng đang giao',
-        'message': 'Đơn hàng #DH002 đang trên đường giao đến bạn',
-        'time': '2 ngày trước',
-        'icon': Icons.local_shipping,
-        'color': AppTheme.info,
-        'read': true,
+        'step': '3',
+        'title': 'Nhập mã giảm giá vào ô "Mã khuyến mãi" tại trang thanh toán',
       },
       {
-        'title': 'Sản phẩm yêu thích đang giảm giá',
-        'message': 'Ghế sofa bạn đã thích đang giảm giá 25%',
-        'time': '3 ngày trước',
-        'icon': Icons.favorite,
-        'color': AppTheme.error,
-        'read': true,
+        'step': '4',
+        'title': 'Nhấn "Áp dụng" để được giảm giá',
       },
     ];
 
-    return ListView.separated(
-      padding: const EdgeInsets.all(16),
-      itemCount: notifications.length,
-      separatorBuilder: (context, index) => const Divider(height: 1),
-      itemBuilder: (context, index) {
-        final notification = notifications[index];
-        final isRead = notification['read'] as bool;
-
-        return Container(
-          color: isRead ? Colors.transparent : AppTheme.primary50,
-          child: ListTile(
-            leading: Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: (notification['color'] as Color).withValues(alpha: 0.1),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                notification['icon'] as IconData,
-                color: notification['color'] as Color,
-              ),
-            ),
-            title: Text(
-              notification['title'] as String,
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    fontWeight: isRead ? FontWeight.normal : FontWeight.bold,
-                  ),
-            ),
-            subtitle: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 4),
-                Text(
-                  notification['message'] as String,
-                  style: Theme.of(context).textTheme.bodySmall,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Hướng dẫn sử dụng mã giảm giá',
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  notification['time'] as String,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppTheme.char500,
+          ),
+          const SizedBox(height: 24),
+          ...guideSteps.map((step) => Padding(
+                padding: const EdgeInsets.only(bottom: 20),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: AppTheme.primary100,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: AppTheme.primary400,
+                          width: 2,
+                        ),
                       ),
+                      child: Center(
+                        child: Text(
+                          step['step'] as String,
+                          style: TextStyle(
+                            color: AppTheme.primary600,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Text(
+                          step['title'] as String,
+                          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                height: 1.5,
+                              ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              )),
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppTheme.info.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: AppTheme.info.withOpacity(0.3),
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.info_outline,
+                  color: AppTheme.info,
+                  size: 24,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Lưu ý: Mỗi đơn hàng chỉ được sử dụng một mã giảm giá. Kiểm tra điều kiện áp dụng của từng mã trước khi sử dụng.',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: AppTheme.char700,
+                          height: 1.4,
+                        ),
+                  ),
                 ),
               ],
             ),
-            trailing: !isRead
-                ? Container(
-                    width: 8,
-                    height: 8,
-                    decoration: const BoxDecoration(
-                      color: AppTheme.primary500,
-                      shape: BoxShape.circle,
-                    ),
-                  )
-                : null,
-            onTap: () {
-              // TODO: Mark as read and show details
-            },
           ),
-        );
-      },
+        ],
+      ),
     );
   }
 
@@ -368,14 +440,17 @@ class _PromotionsPageState extends State<PromotionsPage>
     );
   }
 
-  void _showPromotionDetails(dynamic promotion) {
+  void _showPromotionDetails(PromotionModel promotion) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
       builder: (context) {
         return DraggableScrollableSheet(
-          initialChildSize: 0.6,
-          minChildSize: 0.4,
+          initialChildSize: 0.7,
+          minChildSize: 0.5,
           maxChildSize: 0.9,
           expand: false,
           builder: (context, scrollController) {
@@ -396,30 +471,33 @@ class _PromotionsPageState extends State<PromotionsPage>
                   ),
                   const SizedBox(height: 24),
                   Container(
-                    padding: const EdgeInsets.all(24),
+                    padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
-                        colors: [AppTheme.warning, AppTheme.warning.withValues(alpha: 0.7)],
+                        colors: [AppTheme.primary400, AppTheme.primary600],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(16),
                     ),
-                    child: const Column(
+                    child: Column(
                       children: [
                         Text(
-                          '20%',
-                          style: TextStyle(
+                          promotion.discountText,
+                          style: const TextStyle(
                             color: Colors.white,
                             fontSize: 48,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
+                        const SizedBox(height: 8),
                         Text(
                           'GIẢM GIÁ',
                           style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 20,
+                            color: Colors.white.withOpacity(0.9),
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 2,
                           ),
                         ),
                       ],
@@ -427,52 +505,76 @@ class _PromotionsPageState extends State<PromotionsPage>
                   ),
                   const SizedBox(height: 24),
                   Text(
-                    'Giảm giá 20% cho đơn từ 5 triệu',
-                    style: Theme.of(context).textTheme.titleLarge,
+                    promotion.description,
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
                     textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 16),
-                  _buildDetailRow(Icons.code, 'Mã khuyến mãi', 'SUMMER2025'),
-                  _buildDetailRow(Icons.calendar_today, 'Hạn sử dụng', '31/12/2025'),
-                  _buildDetailRow(Icons.shopping_cart, 'Đơn tối thiểu', '5.000.000đ'),
-                  _buildDetailRow(Icons.confirmation_number, 'Số lượng', 'Không giới hạn'),
+                  const SizedBox(height: 24),
+                  _buildDetailRow(Icons.code, 'Mã khuyến mãi', promotion.code),
+                  _buildDetailRow(Icons.calendar_today, 'Hạn sử dụng', promotion.dateRangeText),
+                  _buildDetailRow(
+                    Icons.shopping_cart,
+                    'Đơn tối thiểu',
+                    promotion.minSpend > 0
+                        ? '${promotion.minSpend.toStringAsFixed(0)}đ'
+                        : 'Không giới hạn',
+                  ),
+                  _buildDetailRow(
+                    Icons.discount,
+                    'Loại giảm giá',
+                    promotion.discountType == DiscountType.percentage
+                        ? 'Phần trăm'
+                        : 'Số tiền cố định',
+                  ),
+                  _buildDetailRow(
+                    Icons.check_circle,
+                    'Trạng thái',
+                    promotion.statusText,
+                  ),
                   const SizedBox(height: 24),
                   Text(
-                    'Điều kiện áp dụng:',
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    '• Áp dụng cho tất cả sản phẩm\n'
-                    '• Giá trị đơn hàng tối thiểu 5.000.000đ\n'
-                    '• Không áp dụng cùng khuyến mãi khác\n'
-                    '• Có hiệu lực đến 31/12/2025',
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                  const SizedBox(height: 24),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: () {
-                            // TODO: Copy code
-                          },
-                          icon: const Icon(Icons.copy),
-                          label: const Text('Sao chép mã'),
+                    'Điều kiện áp dụng',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
                         ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: () {
+                  ),
+                  const SizedBox(height: 12),
+                  _buildConditionItem('Áp dụng cho tất cả sản phẩm'),
+                  _buildConditionItem(
+                    promotion.minSpend > 0
+                        ? 'Đơn hàng tối thiểu ${promotion.minSpend.toStringAsFixed(0)}đ'
+                        : 'Không giới hạn giá trị đơn hàng',
+                  ),
+                  _buildConditionItem('Không áp dụng cùng mã khác'),
+                  const SizedBox(height: 24),
+                  ElevatedButton(
+                    onPressed: promotion.isValid
+                        ? () {
                             Navigator.pop(context);
-                            // TODO: Apply promotion
-                          },
-                          icon: const Icon(Icons.check),
-                          label: const Text('Áp dụng'),
-                        ),
+                            // TODO: Copy code to clipboard
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Đã sao chép mã ${promotion.code}'),
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                          }
+                        : null,
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                    ],
+                    ),
+                    child: Text(
+                      promotion.isValid ? 'Sao chép mã' : 'Mã không còn hiệu lực',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -503,6 +605,29 @@ class _PromotionsPageState extends State<PromotionsPage>
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildConditionItem(String text) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(
+            Icons.check_circle,
+            size: 16,
+            color: AppTheme.success,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              text,
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
           ),
         ],
       ),

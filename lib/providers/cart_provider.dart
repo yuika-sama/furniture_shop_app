@@ -2,11 +2,19 @@ import 'package:flutter/foundation.dart';
 import '../models/cart_model.dart';
 import '../service/api_client.dart';
 import '../service/cart_service.dart';
+import 'auth_provider.dart';
 
 /// Cart State Provider
 /// Quản lý trạng thái giỏ hàng trong app
 class CartProvider with ChangeNotifier {
-  final CartService _cartService = CartService(ApiClient());
+  final CartService _cartService;
+  final AuthProvider? _authProvider;
+
+  CartProvider({
+    CartService? cartService,
+    AuthProvider? authProvider,
+  })  : _cartService = cartService ?? CartService(ApiClient()),
+        _authProvider = authProvider;
   
   CartModel? _cart;
   bool _isLoading = false;

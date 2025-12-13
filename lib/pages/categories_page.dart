@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../constants/app_theme.dart';
 import '../providers/product_provider.dart';
+import '../providers/category_provider.dart';
 import '../components/app_bar_actions.dart';
 import '../components/room_category_components.dart';
 
@@ -21,6 +22,17 @@ class _CategoriesPageState extends State<CategoriesPage>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadData();
+    });
+  }
+
+  Future<void> _loadData() async {
+    final categoryProvider = context.read<CategoryProvider>();
+    await Future.wait([
+      categoryProvider.loadCategoryTree(),
+      categoryProvider.loadCategories(),
+    ]);
   }
 
   @override
@@ -55,8 +67,8 @@ class _CategoriesPageState extends State<CategoriesPage>
                 labelColor: Colors.white,
                 unselectedLabelColor: Colors.white,
                 tabs: const [
-                  Tab(text: 'Theo loại'),
                   Tab(text: 'Theo phòng'),
+                  Tab(text: 'Theo loại'),
                 ],
               ),
             ),
@@ -65,8 +77,8 @@ class _CategoriesPageState extends State<CategoriesPage>
         body: TabBarView(
           controller: _tabController,
           children: [
-            _buildCategoriesList(),
             _buildRoomsList(),
+            _buildCategoriesList(),
           ],
         ),
       ),
@@ -74,45 +86,138 @@ class _CategoriesPageState extends State<CategoriesPage>
   }
 
   Widget _buildCategoriesList() {
-    final categories = [
-      {'name': 'Bàn', 'icon': Icons.table_bar, 'count': 45},
-      {'name': 'Ghế', 'icon': Icons.chair, 'count': 67},
-      {'name': 'Tủ', 'icon': Icons.shelves, 'count': 34},
-      {'name': 'Giường', 'icon': Icons.bed, 'count': 28},
-      {'name': 'Sofa', 'icon': Icons.weekend, 'count': 52},
-      {'name': 'Đèn', 'icon': Icons.lightbulb, 'count': 89},
-      {'name': 'Kệ', 'icon': Icons.kitchen, 'count': 41},
-      {'name': 'Nệm', 'icon': Icons.bed_outlined, 'count': 19},
-    ];
+    return Consumer<CategoryProvider>(
+      builder: (context, provider, child) {
+        if (provider.isLoading) {
+          return const Center(child: CircularProgressIndicator());
+        }
 
-    return ListView.separated(
-      padding: const EdgeInsets.all(16),
-      itemCount: categories.length,
-      separatorBuilder: (context, index) => const SizedBox(height: 12),
-      itemBuilder: (context, index) {
-        final category = categories[index];
-        return Card(
-          child: ListTile(
-            leading: Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: AppTheme.primary100,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(
-                category['icon'] as IconData,
-                color: AppTheme.primary500,
-              ),
+        if (provider.error != null) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.error_outline,
+                  size: 64,
+                  color: AppTheme.error,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  provider.error!,
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: _loadData,
+                  child: const Text('Thử lại'),
+                ),
+              ],
             ),
-            title: Text(
-              category['name'] as String,
-              style: Theme.of(context).textTheme.titleMedium,
+          );
+        }
+
+        if (provider.categories.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.category_outlined,
+                  size: 80,
+                  color: AppTheme.char300,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Chưa có danh mục nào',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: AppTheme.char500,
+                      ),
+                ),
+              ],
             ),
-            subtitle: Text('${category['count']} sản phẩm'),
-            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-            onTap: () {
-              // TODO: Navigate to category products
+          );
+        }
+
+        return RefreshIndicator(
+          onRefresh: _loadData,
+          child: ListView.separated(
+            padding: const EdgeInsets.all(16),
+            itemCount: provider.categories.length,
+            separatorBuilder: (context, index) => const SizedBox(height: 12),
+            itemBuilder: (context, index) {
+              final category = provider.categories[index];
+              return Card(
+                child: ListTile(
+                  leading: category.image != null && category.image!.isNotEmpty
+                      ? ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.network(
+                            category.image!,
+                            width: 48,
+                            height: 48,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Container(
+                                width: 48,
+                                height: 48,
+                                decoration: BoxDecoration(
+                                  color: AppTheme.primary100,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Icon(
+                                  Icons.category,
+                                  color: AppTheme.primary500,
+                                ),
+                              );
+                            },
+                          ),
+                        )
+                      : Container(
+                          width: 48,
+                          height: 48,
+                          decoration: BoxDecoration(
+                            color: AppTheme.primary100,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Icon(
+                            Icons.category,
+                            color: AppTheme.primary500,
+                          ),
+                        ),
+                  title: Text(
+                    category.name,
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (category.description != null && category.description!.isNotEmpty)
+                        Text(
+                          category.description!,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: AppTheme.char600,
+                              ),
+                        ),
+                      if (category.parentCategory != null)
+                        Text(
+                          'Thuộc: ${category.parentCategory!.name}',
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: AppTheme.primary500,
+                                fontSize: 11,
+                              ),
+                        ),
+                    ],
+                  ),
+                  trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                  onTap: () {
+                    // TODO: Navigate to category products
+                    debugPrint('Tapped on category: ${category.name}');
+                  },
+                ),
+              );
             },
           ),
         );
@@ -121,103 +226,116 @@ class _CategoriesPageState extends State<CategoriesPage>
   }
 
   Widget _buildRoomsList() {
-    // All rooms data with banner images and furniture types
-    final allRooms = [
-      {
-        'title': 'Phòng bếp',
-        'subtitle': 'Tiện nghi cho gian bếp hiện đại',
-        'image': 'assets/rooms/kitchen_banner.jpg',
-        'furnitureTypes': [
-          {'name': 'Bộ bàn ăn', 'image': 'assets/furniture_types/dining_set.jpg'},
-          {'name': 'Tủ bếp', 'image': 'assets/furniture_types/kitchen_cabinet.jpg'},
-          {'name': 'Ghế ăn', 'image': 'assets/furniture_types/dining_chair.jpg'},
-          {'name': 'Kệ bếp', 'image': 'assets/furniture_types/kitchen_shelf.jpg'},
-        ],
-      },
-      {
-        'title': 'Phòng khách',
-        'subtitle': 'Không gian thư giãn và tiếp khách',
-        'image': 'assets/rooms/living_room_banner.jpg',
-        'furnitureTypes': [
-          {'name': 'Sofa', 'image': 'assets/furniture_types/sofa.jpg'},
-          {'name': 'Bàn trà', 'image': 'assets/furniture_types/coffee_table.jpg'},
-          {'name': 'Kệ tivi', 'image': 'assets/furniture_types/tv_stand.jpg'},
-          {'name': 'Tủ trang trí', 'image': 'assets/furniture_types/display_cabinet.jpg'},
-        ],
-      },
-      {
-        'title': 'Phòng ngủ',
-        'subtitle': 'Không gian nghỉ ngơi thư giãn',
-        'image': 'assets/rooms/bedroom_banner.jpg',
-        'furnitureTypes': [
-          {'name': 'Giường ngủ', 'image': 'assets/furniture_types/bed.jpg'},
-          {'name': 'Tủ quần áo', 'image': 'assets/furniture_types/wardrobe.jpg'},
-          {'name': 'Bàn trang điểm', 'image': 'assets/furniture_types/dresser.jpg'},
-          {'name': 'Tab đầu giường', 'image': 'assets/furniture_types/nightstand.jpg'},
-        ],
-      },
-      {
-        'title': 'Văn phòng',
-        'subtitle': 'Không gian làm việc hiệu quả',
-        'image': 'assets/rooms/office_banner.jpg',
-        'furnitureTypes': [
-          {'name': 'Bàn làm việc', 'image': 'assets/furniture_types/desk.jpg'},
-          {'name': 'Ghế văn phòng', 'image': 'assets/furniture_types/office_chair.jpg'},
-          {'name': 'Tủ hồ sơ', 'image': 'assets/furniture_types/filing_cabinet.jpg'},
-          {'name': 'Kệ sách', 'image': 'assets/furniture_types/bookshelf.jpg'},
-        ],
-      },
-    ];
+    return Consumer<CategoryProvider>(
+      builder: (context, provider, child) {
+        if (provider.isLoading) {
+          return const Center(child: CircularProgressIndicator());
+        }
 
-    return ListView.builder(
-      padding: EdgeInsets.zero,
-      itemCount: allRooms.length,
-      itemBuilder: (context, roomIndex) {
-        final roomData = allRooms[roomIndex];
-        
-        return Column(
-          children: [
-            // Room Banner
-            RoomBanner(
-              title: roomData['title'] as String,
-              subtitle: roomData['subtitle'] as String,
-              imagePath: roomData['image'] as String,
-              onViewProducts: () {
-                // TODO: Navigate to all products in this room
-                debugPrint('View all products for ${roomData['title']}');
-              },
-            ),
-            
-            // Furniture Types Grid
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  childAspectRatio: 0.85,
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 12,
+        if (provider.error != null) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.error_outline,
+                  size: 64,
+                  color: AppTheme.error,
                 ),
-                itemCount: (roomData['furnitureTypes'] as List).length,
-                itemBuilder: (context, index) {
-                  final furnitureType = (roomData['furnitureTypes'] as List)[index] as Map<String, String>;
-                  return FurnitureTypeCard(
-                    title: furnitureType['name']!,
-                    imagePath: furnitureType['image']!,
-                    onTap: () {
-                      // TODO: Navigate to products of this furniture type
-                      debugPrint('Tapped on ${furnitureType['name']} in ${roomData['title']}');
-                    },
-                  );
-                },
-              ),
+                const SizedBox(height: 16),
+                Text(
+                  provider.error!,
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: _loadData,
+                  child: const Text('Thử lại'),
+                ),
+              ],
             ),
-            
-            // Spacing between rooms
-            SizedBox(height: roomIndex < allRooms.length - 1 ? 24 : 80),
-          ],
+          );
+        }
+
+        final rootCategories = provider.rootCategories;
+
+        if (rootCategories.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.category_outlined,
+                  size: 80,
+                  color: AppTheme.char300,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Chưa có danh mục nào',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: AppTheme.char500,
+                      ),
+                ),
+              ],
+            ),
+          );
+        }
+
+        return RefreshIndicator(
+          onRefresh: _loadData,
+          child: ListView.builder(
+            padding: EdgeInsets.zero,
+            itemCount: rootCategories.length,
+            itemBuilder: (context, roomIndex) {
+              final room = rootCategories[roomIndex];
+              
+              return Column(
+                children: [
+                  // Room Banner
+                  RoomBanner(
+                    title: room.name,
+                    subtitle: room.description ?? 'Khám phá các sản phẩm',
+                    imagePath: room.image ?? '',
+                    onViewProducts: () {
+                      // TODO: Navigate to all products in this room
+                      debugPrint('View all products for ${room.name}');
+                    },
+                  ),
+                  
+                  // Furniture Types Grid (subcategories)
+                  if (room.children.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: GridView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          childAspectRatio: 0.85,
+                          crossAxisSpacing: 12,
+                          mainAxisSpacing: 12,
+                        ),
+                        itemCount: room.children.length,
+                        itemBuilder: (context, index) {
+                          final subcategory = room.children[index];
+                          return FurnitureTypeCard(
+                            title: subcategory.name,
+                            imagePath: subcategory.image ?? '',
+                            onTap: () {
+                              // TODO: Navigate to products of this furniture type
+                              debugPrint('Tapped on ${subcategory.name} in ${room.name}');
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                  
+                  // Spacing between rooms
+                  SizedBox(height: roomIndex < rootCategories.length - 1 ? 24 : 80),
+                ],
+              );
+            },
+          ),
         );
       },
     );
