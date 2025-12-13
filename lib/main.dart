@@ -16,13 +16,22 @@ import 'service/user_service.dart';
 import 'service/wishlist_service.dart';
 
 // Providers
+import 'providers/auth_provider.dart';
+import 'providers/cart_provider.dart';
+import 'providers/order_provider.dart';
+import 'providers/product_provider.dart';
 import 'providers/promotion_provider.dart';
 import 'providers/review_provider.dart';
 import 'providers/user_provider.dart';
 import 'providers/wishlist_provider.dart';
 
-// Test Pages
-import 'pages/test_api_page.dart';
+// Constants
+import 'constants/app_theme.dart';
+
+// Pages
+import 'pages/main_scaffold.dart';
+import 'pages/search_page.dart';
+import 'pages/cart_page.dart';
 
 void main() {
   runApp(const MyApp());
@@ -72,51 +81,40 @@ class MyApp extends StatelessWidget {
         ProxyProvider<ApiClient, WishlistService>(
           update: (_, apiClient, __) => WishlistService(apiClient),
         ),
-
-        // Providers - inject services
         ChangeNotifierProxyProvider<PromotionService, PromotionProvider>(
           create: (context) => PromotionProvider(
             Provider.of<PromotionService>(context, listen: false),
           ),
-          update: (context, promoService, previous) =>
-          previous ?? PromotionProvider(promoService),
+          update: (_, service, previous) => previous ?? PromotionProvider(service),
         ),
         ChangeNotifierProxyProvider<ReviewService, ReviewProvider>(
           create: (context) => ReviewProvider(
             Provider.of<ReviewService>(context, listen: false),
           ),
-          update: (context, reviewService, previous) =>
-          previous ?? ReviewProvider(reviewService),
+          update: (_, service, previous) => previous ?? ReviewProvider(service),
         ),
         ChangeNotifierProxyProvider<UserService, UserProvider>(
           create: (context) => UserProvider(
             Provider.of<UserService>(context, listen: false),
           ),
-          update: (context, userService, previous) =>
-          previous ?? UserProvider(userService),
+          update: (_, service, previous) => previous ?? UserProvider(service),
         ),
         ChangeNotifierProxyProvider<WishlistService, WishlistProvider>(
           create: (context) => WishlistProvider(
             Provider.of<WishlistService>(context, listen: false),
           ),
-          update: (context, wishlistService, previous) =>
-          previous ?? WishlistProvider(wishlistService),
+          update: (_, service, previous) => previous ?? WishlistProvider(service),
         ),
       ],
       child: MaterialApp(
-        title: 'Furniture Shop - API Test',
+        title: 'Homi Furniture',
         debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-          useMaterial3: true,
-          appBarTheme: const AppBarTheme(
-            elevation: 0,
-            centerTitle: true,
-          ),
-        ),
+        theme: AppTheme.lightTheme,
         initialRoute: '/',
         routes: {
-          '/': (context) => const TestApiPage(),
+          '/': (context) => const MainScaffold(),
+          '/search': (context) => const SearchPage(),
+          '/cart': (context) => const CartPage(),
         },
       ),
     );
