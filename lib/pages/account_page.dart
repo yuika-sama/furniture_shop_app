@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import '../constants/app_theme.dart';
 import '../providers/user_provider.dart';
 import '../providers/auth_provider.dart';
+import 'login_page.dart';
+import 'register_page.dart';
 
 class AccountPage extends StatefulWidget {
   const AccountPage({super.key});
@@ -259,7 +261,10 @@ class _AccountPageState extends State<AccountPage> {
             const SizedBox(height: 32),
             ElevatedButton(
               onPressed: () {
-                // TODO: Navigate to login page
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const LoginPage()),
+                );
               },
               style: ElevatedButton.styleFrom(
                 minimumSize: const Size(200, 48),
@@ -269,7 +274,10 @@ class _AccountPageState extends State<AccountPage> {
             const SizedBox(height: 12),
             TextButton(
               onPressed: () {
-                // TODO: Navigate to register page
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const RegisterPage()),
+                );
               },
               child: const Text('Đăng ký tài khoản mới'),
             ),

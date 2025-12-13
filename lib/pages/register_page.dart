@@ -451,7 +451,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     ),
                     TextButton(
                       onPressed: () {
-                        // TODO: Navigate to login page
+                        Navigator.pop(context);
                       },
                       style: TextButton.styleFrom(
                         padding: EdgeInsets.zero,
