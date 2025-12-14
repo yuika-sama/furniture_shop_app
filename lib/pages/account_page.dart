@@ -487,9 +487,18 @@ class _AccountPageState extends State<AccountPage> {
     );
 
     if (confirm == true && mounted) {
-      // TODO: Implement logout
-      // final authProvider = context.read<AuthProvider>();
-      // await authProvider.logout();
+      final authProvider = context.read<AuthProvider>();
+      await authProvider.logout();
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Đã đăng xuất thành công'),
+            backgroundColor: AppTheme.success,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
     }
   }
 }

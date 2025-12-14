@@ -265,7 +265,7 @@ class _PromotionsPageState extends State<PromotionsPage>
                       ),
                       const SizedBox(height: 3),
                       // Days remaining
-                      if (promotion.daysRemaining != null && promotion.daysRemaining! > 0)
+                      if (promotion.daysRemaining > 0)
                         Row(
                           children: [
                             Icon(

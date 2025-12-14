@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../constants/app_theme.dart';
 import '../providers/cart_provider.dart';
+import '../providers/auth_provider.dart';
+import '../pages/login_page.dart';
 
 class CartPage extends StatefulWidget {
   const CartPage({super.key});
@@ -11,12 +13,51 @@ class CartPage extends StatefulWidget {
 }
 
 class _CartPageState extends State<CartPage> {
+  final _discountController = TextEditingController();
+  bool _isApplyingDiscount = false;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadCart();
+      _checkAuthAndLoadCart();
     });
+  }
+
+  @override
+  void dispose() {
+    _discountController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _checkAuthAndLoadCart() async {
+    final authProvider = context.read<AuthProvider>();
+    
+    // Log auth status
+    debugPrint('=== CART PAGE - AUTH STATUS ===');
+    debugPrint('Is Logged In: ${authProvider.isLoggedIn}');
+    debugPrint('Current User: ${authProvider.currentUser?.fullName ?? "null"}');
+    debugPrint('User Email: ${authProvider.currentUser?.email ?? "null"}');
+    debugPrint('User ID: ${authProvider.currentUser?.id ?? "null"}');
+    debugPrint('================================');
+    
+    if (!authProvider.isLoggedIn) {
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const LoginPage()),
+        );
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Vui lòng đăng nhập để xem giỏ hàng'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+      return;
+    }
+    
+    await _loadCart();
   }
 
   Future<void> _loadCart() async {
@@ -66,10 +107,9 @@ class _CartPageState extends State<CartPage> {
               Expanded(
                 child: RefreshIndicator(
                   onRefresh: _loadCart,
-                  child: ListView.separated(
+                  child: ListView.builder(
                     padding: const EdgeInsets.all(16),
                     itemCount: cartProvider.cart!.items.length,
-                    separatorBuilder: (context, index) => const SizedBox(height: 12),
                     itemBuilder: (context, index) {
                       final item = cartProvider.cart!.items[index];
                       return _buildCartItem(item, cartProvider);
@@ -86,11 +126,17 @@ class _CartPageState extends State<CartPage> {
   }
 
   Widget _buildCartItem(dynamic item, CartProvider cartProvider) {
-    // Mock cart item - will be replaced with actual data
+    final product = item.product;
+    final imageUrl = product?.images?.isNotEmpty == true 
+        ? product!.images!.first 
+        : null;
+    
     return Card(
+      margin: const EdgeInsets.only(bottom: 12),
       child: Padding(
         padding: const EdgeInsets.all(12.0),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Product Image
             Container(
@@ -100,11 +146,24 @@ class _CartPageState extends State<CartPage> {
                 color: AppTheme.beige100,
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Icon(
-                Icons.chair,
-                size: 40,
-                color: AppTheme.primary400,
-              ),
+              clipBehavior: Clip.antiAlias,
+              child: imageUrl != null
+                  ? Image.network(
+                      imageUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return const Icon(
+                          Icons.image_not_supported,
+                          size: 40,
+                          color: AppTheme.char400,
+                        );
+                      },
+                    )
+                  : const Icon(
+                      Icons.chair,
+                      size: 40,
+                      color: AppTheme.primary400,
+                    ),
             ),
             const SizedBox(width: 12),
             // Product Details
@@ -112,17 +171,32 @@ class _CartPageState extends State<CartPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Ghế sofa cao cấp',
-                    style: Theme.of(context).textTheme.titleMedium,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          product?.name ?? 'Tên sản phẩm',
+                          style: Theme.of(context).textTheme.titleMedium,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close, size: 20),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        onPressed: () => _removeItem(item.productId, cartProvider),
+                        color: AppTheme.char600,
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 8),
                   Text(
-                    'Màu: Xám | Kích thước: L',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppTheme.char600,
+                    _formatCurrency(product?.price ?? item.price),
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          color: AppTheme.primary500,
+                          fontWeight: FontWeight.bold,
                         ),
                   ),
                   const SizedBox(height: 8),
@@ -130,9 +204,8 @@ class _CartPageState extends State<CartPage> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        '₫5.000.000',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              color: AppTheme.primary500,
+                        'Tổng: ${_formatCurrency(item.total)}',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                               fontWeight: FontWeight.bold,
                             ),
                       ),
@@ -158,8 +231,8 @@ class _CartPageState extends State<CartPage> {
         mainAxisSize: MainAxisSize.min,
         children: [
           InkWell(
-            onTap: () {
-              // TODO: Decrease quantity
+            onTap: () async {
+              await cartProvider.decrementItem(item.productId);
             },
             borderRadius: const BorderRadius.only(
               topLeft: Radius.circular(8),
@@ -178,13 +251,13 @@ class _CartPageState extends State<CartPage> {
               ),
             ),
             child: Text(
-              '2',
+              '${item.quantity}',
               style: Theme.of(context).textTheme.titleSmall,
             ),
           ),
           InkWell(
-            onTap: () {
-              // TODO: Increase quantity
+            onTap: () async {
+              await cartProvider.incrementItem(item.productId);
             },
             borderRadius: const BorderRadius.only(
               topRight: Radius.circular(8),
@@ -198,6 +271,31 @@ class _CartPageState extends State<CartPage> {
         ],
       ),
     );
+  }
+
+  Future<void> _removeItem(String productId, CartProvider cartProvider) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Xóa sản phẩm'),
+        content: const Text('Bạn có chắc chắn muốn xóa sản phẩm này?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Hủy'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.error),
+            child: const Text('Xóa'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      await cartProvider.removeItem(productId);
+    }
   }
 
   Widget _buildCheckoutSection(CartProvider cartProvider) {
@@ -221,6 +319,7 @@ class _CartPageState extends State<CartPage> {
               children: [
                 Expanded(
                   child: TextField(
+                    controller: _discountController,
                     decoration: InputDecoration(
                       hintText: 'Nhập mã giảm giá',
                       prefixIcon: const Icon(Icons.local_offer),
@@ -231,35 +330,54 @@ class _CartPageState extends State<CartPage> {
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
+                      suffixIcon: cartProvider.hasDiscount
+                          ? IconButton(
+                              icon: const Icon(Icons.close, size: 20),
+                              onPressed: () => _removeDiscount(cartProvider),
+                            )
+                          : null,
                     ),
+                    enabled: !cartProvider.hasDiscount,
                   ),
                 ),
                 const SizedBox(width: 8),
                 ElevatedButton(
-                  onPressed: () {
-                    // TODO: Apply promotion code
-                  },
+                  onPressed: cartProvider.hasDiscount || _isApplyingDiscount
+                      ? null
+                      : () => _applyDiscount(cartProvider),
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 24,
                       vertical: 16,
                     ),
                   ),
-                  child: const Text('Áp dụng'),
+                  child: _isApplyingDiscount
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text('Áp dụng'),
                 ),
               ],
             ),
             const SizedBox(height: 16),
             // Price Summary
-            _buildPriceRow('Tạm tính', '₫10.000.000'),
+            _buildPriceRow('Tạm tính', _formatCurrency(cartProvider.subTotal)),
+            if (cartProvider.hasDiscount) ...[
+              const SizedBox(height: 8),
+              _buildPriceRow(
+                'Giảm giá (${cartProvider.discountCode})',
+                '-${_formatCurrency(cartProvider.savings)}',
+                color: AppTheme.success,
+              ),
+            ],
             const SizedBox(height: 8),
-            _buildPriceRow('Giảm giá', '-₫2.000.000', color: AppTheme.success),
-            const SizedBox(height: 8),
-            _buildPriceRow('Phí vận chuyển', '₫50.000'),
+            _buildPriceRow('Phí vận chuyển', 'Miễn phí', color: AppTheme.success),
             const Divider(height: 24),
             _buildPriceRow(
               'Tổng cộng',
-              '₫8.050.000',
+              _formatCurrency(cartProvider.totalAmount),
               isTotal: true,
             ),
             const SizedBox(height: 16),
@@ -348,7 +466,7 @@ class _CartPageState extends State<CartPage> {
             const SizedBox(height: 32),
             ElevatedButton.icon(
               onPressed: () {
-                // TODO: Navigate to home or products
+                Navigator.pop(context);
               },
               icon: const Icon(Icons.shopping_bag),
               label: const Text('Khám phá sản phẩm'),
@@ -399,6 +517,58 @@ class _CartPageState extends State<CartPage> {
     );
   }
 
+  Future<void> _applyDiscount(CartProvider cartProvider) async {
+    final code = _discountController.text.trim();
+    if (code.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Vui lòng nhập mã giảm giá'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isApplyingDiscount = true);
+    final result = await cartProvider.applyDiscount(code);
+    setState(() => _isApplyingDiscount = false);
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result['message'] ?? 'Đã áp dụng mã giảm giá'),
+          backgroundColor: result['success'] == true ? AppTheme.success : AppTheme.error,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  Future<void> _removeDiscount(CartProvider cartProvider) async {
+    final result = await cartProvider.removeDiscount();
+    
+    if (result['success'] == true) {
+      _discountController.clear();
+    }
+    
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result['message'] ?? 'Đã gỡ mã giảm giá'),
+          backgroundColor: result['success'] == true ? AppTheme.success : AppTheme.error,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  String _formatCurrency(double value) {
+    return '${value.toStringAsFixed(0).replaceAllMapped(
+          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+          (Match m) => '${m[1]}.',
+        )}đ';
+  }
+
   void _showClearCartDialog() {
     showDialog(
       context: context,
@@ -412,9 +582,10 @@ class _CartPageState extends State<CartPage> {
               child: const Text('Hủy'),
             ),
             ElevatedButton(
-              onPressed: () {
-                // TODO: Clear cart
-                Navigator.pop(context);
+              onPressed: () async {
+                final cartProvider = context.read<CartProvider>();
+                await cartProvider.clearCart();
+                if (context.mounted) Navigator.pop(context);
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.error,

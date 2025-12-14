@@ -1,10 +1,10 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'token_storage_service.dart';
 
 class ApiClient {
   late Dio dio;
   String baseUrl = "https://furniture-shop-backend.vercel.app";
-  final storage = const FlutterSecureStorage();
 
   ApiClient() {
     dio = Dio(
@@ -19,7 +19,7 @@ class ApiClient {
     // Interceptor
     dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) async {
-        String? token = await storage.read(key: 'auth_token');
+        String? token = await TokenStorageService.getAccessToken();
 
         if (token != null) {
           options.headers['Authorization'] = 'Bearer $token';
@@ -44,7 +44,7 @@ class ApiClient {
         print('   Error: ${e.message}');
         
         if (e.response?.statusCode == 401) {
-          await storage.delete(key: 'auth_token');
+          await TokenStorageService.clearAll();
           // TODO: Navigate to login
         }
         return handler.next(e);

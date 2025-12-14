@@ -6,8 +6,8 @@ class ProductModel {
   final String id;
   final String name;
   final String slug;
-  final String sku;
-  final String description;
+  final String? sku;
+  final String? description;
   final double price;
   final double? originalPrice;
   final List<String> images;
@@ -36,20 +36,20 @@ class ProductModel {
   // Featured
   final bool isFeatured;
   
-  final DateTime createdAt;
+  final DateTime? createdAt;
   final DateTime? updatedAt;
 
   ProductModel({
     required this.id,
     required this.name,
     required this.slug,
-    required this.sku,
-    required this.description,
+    this.sku,
+    this.description,
     required this.price,
     this.originalPrice,
     this.images = const [],
     this.model3DUrl,
-    required this.categoryId,
+    this.categoryId = '',
     this.category,
     this.brandId,
     this.brand,
@@ -62,7 +62,7 @@ class ProductModel {
     this.averageRating = 0,
     this.totalReviews = 0,
     this.isFeatured = false,
-    required this.createdAt,
+    this.createdAt,
     this.updatedAt,
   });
 
@@ -71,8 +71,8 @@ class ProductModel {
       id: json['_id'] ?? '',
       name: json['name'] ?? '',
       slug: json['slug'] ?? '',
-      sku: json['sku'] ?? '',
-      description: json['description'] ?? '',
+      sku: json['sku'],
+      description: json['description'],
       price: (json['price'] ?? 0).toDouble(),
       originalPrice: json['originalPrice'] != null 
           ? (json['originalPrice']).toDouble() 
@@ -123,10 +123,10 @@ class ProductModel {
       totalReviews: json['totalReviews'] ?? 0,
       isFeatured: json['isFeatured'] ?? false,
       createdAt: json['createdAt'] != null 
-          ? DateTime.parse(json['createdAt']) 
-          : DateTime.now(),
+          ? DateTime.tryParse(json['createdAt']) 
+          : null,
       updatedAt: json['updatedAt'] != null 
-          ? DateTime.parse(json['updatedAt']) 
+          ? DateTime.tryParse(json['updatedAt']) 
           : null,
     );
   } 
@@ -152,7 +152,7 @@ class ProductModel {
       'averageRating': averageRating,
       'totalReviews': totalReviews,
       'isFeatured': isFeatured,
-      'createdAt': createdAt.toIso8601String(),
+      'createdAt': createdAt?.toIso8601String(),
       'updatedAt': updatedAt?.toIso8601String(),
     };
   }

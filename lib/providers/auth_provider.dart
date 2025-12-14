@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import '../models/user_model.dart';
 import '../service/api_client.dart';
 import '../service/auth_service.dart';
+import '../service/token_storage_service.dart';
 
 /// Auth State Provider
 /// Quản lý trạng thái authentication trong app
@@ -22,7 +23,7 @@ class AuthProvider with ChangeNotifier {
 
   /// Initialize - Check if user is logged in and load user data
   Future<void> initialize() async {
-    final isLoggedIn = await _authService.isLoggedIn();
+    final isLoggedIn = await TokenStorageService.isLoggedIn();
     if (isLoggedIn) {
       await loadCurrentUser();
     }

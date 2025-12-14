@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'api_client.dart';
+import 'token_storage_service.dart';
 import '../models/user_model.dart';
 
 class AuthService {
@@ -41,19 +42,12 @@ class AuthService {
         
         // Lưu token vào secure storage
         if (authResponse.token != null) {
-          await _apiClient.storage.write(
-            key: 'auth_token',
-            value: authResponse.token,
-          );
+          await TokenStorageService.saveAccessToken(authResponse.token!);
+          
           // Lưu thêm user info
-          await _apiClient.storage.write(
-            key: 'user_id',
-            value: authResponse.user?.id,
-          );
-          await _apiClient.storage.write(
-            key: 'user_email',
-            value: authResponse.user?.email,
-          );
+          if (authResponse.user?.id != null) {
+            await TokenStorageService.saveUserId(authResponse.user!.id);
+          }
         }
 
         return {
@@ -107,23 +101,12 @@ class AuthService {
         
         // Lưu token vào secure storage
         if (authResponse.token != null) {
-          await _apiClient.storage.write(
-            key: 'auth_token',
-            value: authResponse.token,
-          );
+          await TokenStorageService.saveAccessToken(authResponse.token!);
+          
           // Lưu thêm user info
-          await _apiClient.storage.write(
-            key: 'user_id',
-            value: authResponse.user?.id,
-          );
-          await _apiClient.storage.write(
-            key: 'user_email',
-            value: authResponse.user?.email,
-          );
-          await _apiClient.storage.write(
-            key: 'user_role',
-            value: authResponse.user?.role,
-          );
+          if (authResponse.user?.id != null) {
+            await TokenStorageService.saveUserId(authResponse.user!.id);
+          }
         }
 
         return {
@@ -259,31 +242,14 @@ class AuthService {
 
   /// Logout - Xóa token khỏi storage
   Future<void> logout() async {
-    await _apiClient.storage.delete(key: 'auth_token');
-    await _apiClient.storage.delete(key: 'user_id');
-    await _apiClient.storage.delete(key: 'user_email');
-    await _apiClient.storage.delete(key: 'user_role');
+    await TokenStorageService.clearAll();
   }
 
-  /// Check if user is logged in
   Future<bool> isLoggedIn() async {
-    final token = await _apiClient.storage.read(key: 'auth_token');
-    return token != null && token.isNotEmpty;
+    return await TokenStorageService.isLoggedIn();
   }
 
-  /// Get current token
   Future<String?> getToken() async {
-    return await _apiClient.storage.read(key: 'auth_token');
-  }
-
-  /// Get current user role
-  Future<String?> getUserRole() async {
-    return await _apiClient.storage.read(key: 'user_role');
-  }
-
-  /// Check if current user is admin
-  Future<bool> isAdmin() async {
-    final role = await getUserRole();
-    return role == 'admin';
+    return await TokenStorageService.getAccessToken();
   }
 }

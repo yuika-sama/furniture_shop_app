@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
+import 'package:provider/provider.dart';
 import '../constants/app_theme.dart';
+import '../providers/auth_provider.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -19,6 +21,7 @@ class _RegisterPageState extends State<RegisterPage> {
   bool _acceptTerms = false;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -28,6 +31,56 @@ class _RegisterPageState extends State<RegisterPage> {
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
+  }
+
+  Future<void> _handleRegister() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    if (!_acceptTerms) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Vui lòng đồng ý với điều khoản sử dụng'),
+          backgroundColor: AppTheme.error,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    final authProvider = context.read<AuthProvider>();
+    final result = await authProvider.register(
+      fullName: _fullNameController.text.trim(),
+      email: _emailController.text.trim(),
+      password: _passwordController.text,
+      phone: _phoneController.text.trim().isEmpty ? null : _phoneController.text.trim(),
+    );
+
+    setState(() => _isLoading = false);
+
+    if (mounted) {
+      if (result['success'] == true) {
+        // Registration successful - navigate back
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Đăng ký thành công! Chào mừng bạn đến với FurniShop'),
+            backgroundColor: AppTheme.success,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      } else {
+        // Show error
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result['message'] ?? 'Đăng ký thất bại'),
+            backgroundColor: AppTheme.error,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -96,6 +149,15 @@ class _RegisterPageState extends State<RegisterPage> {
                         TextFormField(
                           controller: _fullNameController,
                           keyboardType: TextInputType.name,
+                          validator: (value) {
+                            if (value == null || value.trim().isEmpty) {
+                              return 'Vui lòng nhập họ và tên';
+                            }
+                            if (value.trim().length < 2) {
+                              return 'Họ và tên phải có ít nhất 2 ký tự';
+                            }
+                            return null;
+                          },
                           decoration: InputDecoration(
                             hintText: 'Nguyễn Văn A',
                             hintStyle: TextStyle(
@@ -121,6 +183,20 @@ class _RegisterPageState extends State<RegisterPage> {
                                 width: 2,
                               ),
                             ),
+                            errorBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              borderSide: BorderSide(
+                                color: AppTheme.error,
+                                width: 1,
+                              ),
+                            ),
+                            focusedErrorBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              borderSide: BorderSide(
+                                color: AppTheme.error,
+                                width: 2,
+                              ),
+                            ),
                             contentPadding: const EdgeInsets.symmetric(
                               horizontal: 16,
                               vertical: 14,
@@ -142,6 +218,16 @@ class _RegisterPageState extends State<RegisterPage> {
                         TextFormField(
                           controller: _emailController,
                           keyboardType: TextInputType.emailAddress,
+                          validator: (value) {
+                            if (value == null || value.trim().isEmpty) {
+                              return 'Vui lòng nhập email';
+                            }
+                            final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+                            if (!emailRegex.hasMatch(value.trim())) {
+                              return 'Email không hợp lệ';
+                            }
+                            return null;
+                          },
                           decoration: InputDecoration(
                             hintText: 'your@email.com',
                             hintStyle: TextStyle(
@@ -167,6 +253,20 @@ class _RegisterPageState extends State<RegisterPage> {
                                 width: 2,
                               ),
                             ),
+                            errorBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              borderSide: BorderSide(
+                                color: AppTheme.error,
+                                width: 1,
+                              ),
+                            ),
+                            focusedErrorBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              borderSide: BorderSide(
+                                color: AppTheme.error,
+                                width: 2,
+                              ),
+                            ),
                             contentPadding: const EdgeInsets.symmetric(
                               horizontal: 16,
                               vertical: 14,
@@ -188,6 +288,15 @@ class _RegisterPageState extends State<RegisterPage> {
                         TextFormField(
                           controller: _phoneController,
                           keyboardType: TextInputType.phone,
+                          validator: (value) {
+                            if (value != null && value.trim().isNotEmpty) {
+                              final phoneRegex = RegExp(r'^[0-9]{10,11}$');
+                              if (!phoneRegex.hasMatch(value.trim())) {
+                                return 'Số điện thoại không hợp lệ (10-11 số)';
+                              }
+                            }
+                            return null;
+                          },
                           decoration: InputDecoration(
                             hintText: '0901234567',
                             hintStyle: TextStyle(
@@ -213,6 +322,20 @@ class _RegisterPageState extends State<RegisterPage> {
                                 width: 2,
                               ),
                             ),
+                            errorBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              borderSide: BorderSide(
+                                color: AppTheme.error,
+                                width: 1,
+                              ),
+                            ),
+                            focusedErrorBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              borderSide: BorderSide(
+                                color: AppTheme.error,
+                                width: 2,
+                              ),
+                            ),
                             contentPadding: const EdgeInsets.symmetric(
                               horizontal: 16,
                               vertical: 14,
@@ -234,6 +357,15 @@ class _RegisterPageState extends State<RegisterPage> {
                         TextFormField(
                           controller: _passwordController,
                           obscureText: _obscurePassword,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Vui lòng nhập mật khẩu';
+                            }
+                            if (value.length < 6) {
+                              return 'Mật khẩu phải có ít nhất 6 ký tự';
+                            }
+                            return null;
+                          },
                           decoration: InputDecoration(
                             hintText: '••••••••',
                             hintStyle: TextStyle(
@@ -256,6 +388,20 @@ class _RegisterPageState extends State<RegisterPage> {
                               borderRadius: BorderRadius.circular(8),
                               borderSide: BorderSide(
                                 color: AppTheme.primary500,
+                                width: 2,
+                              ),
+                            ),
+                            errorBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              borderSide: BorderSide(
+                                color: AppTheme.error,
+                                width: 1,
+                              ),
+                            ),
+                            focusedErrorBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              borderSide: BorderSide(
+                                color: AppTheme.error,
                                 width: 2,
                               ),
                             ),
@@ -302,6 +448,15 @@ class _RegisterPageState extends State<RegisterPage> {
                         TextFormField(
                           controller: _confirmPasswordController,
                           obscureText: _obscureConfirmPassword,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Vui lòng xác nhận mật khẩu';
+                            }
+                            if (value != _passwordController.text) {
+                              return 'Mật khẩu xác nhận không khớp';
+                            }
+                            return null;
+                          },
                           decoration: InputDecoration(
                             hintText: '••••••••',
                             hintStyle: TextStyle(
@@ -324,6 +479,20 @@ class _RegisterPageState extends State<RegisterPage> {
                               borderRadius: BorderRadius.circular(8),
                               borderSide: BorderSide(
                                 color: AppTheme.primary500,
+                                width: 2,
+                              ),
+                            ),
+                            errorBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              borderSide: BorderSide(
+                                color: AppTheme.error,
+                                width: 1,
+                              ),
+                            ),
+                            focusedErrorBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              borderSide: BorderSide(
+                                color: AppTheme.error,
                                 width: 2,
                               ),
                             ),
@@ -412,25 +581,33 @@ class _RegisterPageState extends State<RegisterPage> {
 
                         // Register Button
                         ElevatedButton(
-                          onPressed: () {
-                            // TODO: Implement register logic
-                          },
+                          onPressed: _isLoading ? null : _handleRegister,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppTheme.primary500,
                             foregroundColor: Colors.white,
+                            disabledBackgroundColor: AppTheme.primary300,
                             padding: const EdgeInsets.symmetric(vertical: 16),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8),
                             ),
                             elevation: 0,
                           ),
-                          child: const Text(
-                            'Đăng ký',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
+                          child: _isLoading
+                              ? SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                  ),
+                                )
+                              : const Text(
+                                  'Đăng ký',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
                         ),
                       ],
                     ),

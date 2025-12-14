@@ -4,6 +4,7 @@ import '../constants/app_theme.dart';
 import '../providers/category_provider.dart';
 import '../providers/product_provider.dart';
 import '../providers/promotion_provider.dart';
+import '../providers/wishlist_provider.dart';
 import '../components/app_bar_actions.dart';
 import '../components/product_card.dart';
 
@@ -496,8 +497,8 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildProductCard(int index) {
-    return Consumer<ProductProvider>(
-      builder: (context, productProvider, child) {
+    return Consumer2<ProductProvider, WishlistProvider>(
+      builder: (context, productProvider, wishlistProvider, child) {
         // Use real data from API
         final newArrivals = productProvider.newArrivals;
         
@@ -514,6 +515,7 @@ class _HomePageState extends State<HomePage> {
         }
 
         final product = newArrivals[index % newArrivals.length];
+        final isFavorite = wishlistProvider.isInWishlist(product.id);
 
         return ProductCard(
           imageUrl: product.images.isNotEmpty 
@@ -523,7 +525,7 @@ class _HomePageState extends State<HomePage> {
           category: product.category?.name ?? '',
           brand: product.brand?.name,
           price: product.price,
-          isFavorite: false, // Will be managed by WishlistProvider
+          isFavorite: isFavorite,
           onTap: () {
             // TODO: Navigate to product detail page
             debugPrint('Tapped on: ${product.name}');
@@ -538,9 +540,21 @@ class _HomePageState extends State<HomePage> {
               ),
             );
           },
-          onToggleFavorite: () {
-            // TODO: Toggle favorite using WishlistProvider
-            debugPrint('Toggle favorite: ${product.name}');
+          onToggleFavorite: () async {
+            await wishlistProvider.toggleProduct(product.id);
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    isFavorite
+                        ? 'Đã xóa "${product.name}" khỏi danh sách yêu thích'
+                        : 'Đã thêm "${product.name}" vào danh sách yêu thích',
+                  ),
+                  duration: const Duration(seconds: 2),
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+            }
           },
         );
       },
@@ -548,8 +562,8 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildBestSellerCard(int index) {
-    return Consumer<ProductProvider>(
-      builder: (context, productProvider, child) {
+    return Consumer2<ProductProvider, WishlistProvider>(
+      builder: (context, productProvider, wishlistProvider, child) {
         // Use real data from API
         final bestSellers = productProvider.bestSellers;
         
@@ -566,6 +580,7 @@ class _HomePageState extends State<HomePage> {
         }
 
         final product = bestSellers[index % bestSellers.length];
+        final isFavorite = wishlistProvider.isInWishlist(product.id);
 
         return ProductCard(
           imageUrl: product.images.isNotEmpty 
@@ -575,7 +590,7 @@ class _HomePageState extends State<HomePage> {
           category: product.category?.name ?? '',
           brand: product.brand?.name,
           price: product.price,
-          isFavorite: false,
+          isFavorite: isFavorite,
           onTap: () {
             // TODO: Navigate to product detail page
             debugPrint('Tapped on best seller: ${product.name}');
@@ -590,9 +605,21 @@ class _HomePageState extends State<HomePage> {
               ),
             );
           },
-          onToggleFavorite: () {
-            // TODO: Toggle favorite using WishlistProvider
-            debugPrint('Toggle favorite best seller: ${product.name}');
+          onToggleFavorite: () async {
+            await wishlistProvider.toggleProduct(product.id);
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    isFavorite
+                        ? 'Đã xóa "${product.name}" khỏi danh sách yêu thích'
+                        : 'Đã thêm "${product.name}" vào danh sách yêu thích',
+                  ),
+                  duration: const Duration(seconds: 2),
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+            }
           },
         );
       },
@@ -708,7 +735,7 @@ class _HomePageState extends State<HomePage> {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      if (promotion.daysRemaining != null && promotion.daysRemaining! > 0)
+                      if (promotion.daysRemaining > 0)
                         Padding(
                           padding: const EdgeInsets.only(top: 4),
                           child: Text(

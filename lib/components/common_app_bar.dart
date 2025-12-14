@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../constants/app_theme.dart';
 import '../providers/cart_provider.dart';
+import '../providers/auth_provider.dart';
 import '../pages/search_page.dart';
 import '../pages/cart_page.dart';
+import '../pages/wishlist_page.dart';
+import '../pages/login_page.dart';
 
 /// Common app bar with search, wishlist, and cart icons
 class CommonAppBar extends StatelessWidget implements PreferredSizeWidget {
@@ -38,7 +41,24 @@ class CommonAppBar extends StatelessWidget implements PreferredSizeWidget {
           IconButton(
             icon: const Icon(Icons.favorite_border),
             onPressed: () {
-              // TODO: Navigate to wishlist
+              final authProvider = context.read<AuthProvider>();
+              if (authProvider.isLoggedIn) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const WishlistPage()),
+                );
+              } else {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const LoginPage()),
+                );
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Vui lòng đăng nhập để xem danh sách yêu thích'),
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              }
             },
           ),
         if (additionalActions != null) ...additionalActions!,
@@ -59,10 +79,24 @@ class CartIconWithBadge extends StatelessWidget {
         IconButton(
           icon: const Icon(Icons.shopping_cart_outlined),
           onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const CartPage()),
-            );
+            final authProvider = context.read<AuthProvider>();
+            if (authProvider.isLoggedIn) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const CartPage()),
+              );
+            } else {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const LoginPage()),
+              );
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Vui lòng đăng nhập để xem giỏ hàng'),
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+            }
           },
         ),
         Positioned(
