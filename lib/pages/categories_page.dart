@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../constants/app_theme.dart';
-import '../providers/product_provider.dart';
 import '../providers/category_provider.dart';
 import '../components/app_bar_actions.dart';
 import '../components/room_category_components.dart';
+import 'products_page.dart';
 
 class CategoriesPage extends StatefulWidget {
   const CategoriesPage({super.key});
@@ -213,8 +213,14 @@ class _CategoriesPageState extends State<CategoriesPage>
                   ),
                   trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                   onTap: () {
-                    // TODO: Navigate to category products
-                    debugPrint('Tapped on category: ${category.name}');
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ProductsPage(
+                          categoryId: category.id,
+                        ),
+                      ),
+                    );
                   },
                 ),
               );
@@ -297,8 +303,14 @@ class _CategoriesPageState extends State<CategoriesPage>
                     subtitle: room.description ?? 'Khám phá các sản phẩm',
                     imagePath: room.image ?? '',
                     onViewProducts: () {
-                      // TODO: Navigate to all products in this room
-                      debugPrint('View all products for ${room.name}');
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ProductsPage(
+                            categoryId: room.id,
+                          ),
+                        ),
+                      );
                     },
                   ),
                   
@@ -322,8 +334,14 @@ class _CategoriesPageState extends State<CategoriesPage>
                             title: subcategory.name,
                             imagePath: subcategory.image ?? '',
                             onTap: () {
-                              // TODO: Navigate to products of this furniture type
-                              debugPrint('Tapped on ${subcategory.name} in ${room.name}');
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => ProductsPage(
+                                    categoryId: subcategory.id,
+                                  ),
+                                ),
+                              );
                             },
                           );
                         },
@@ -342,121 +360,6 @@ class _CategoriesPageState extends State<CategoriesPage>
   }
 
 
-
-  Widget _buildOldRoomsList() {
-    final rooms = [
-      {
-        'name': 'Phòng khách',
-        'icon': Icons.weekend,
-        'description': 'Sofa, bàn trà, kệ TV',
-        'image': Icons.living
-      },
-      {
-        'name': 'Phòng ngủ',
-        'icon': Icons.bed,
-        'description': 'Giường, tủ quần áo, bàn trang điểm',
-        'image': Icons.bedroom_parent
-      },
-      {
-        'name': 'Nhà bếp',
-        'icon': Icons.kitchen,
-        'description': 'Tủ bếp, bàn ăn, ghế ăn',
-        'image': Icons.dining
-      },
-      {
-        'name': 'Phòng làm việc',
-        'icon': Icons.desk,
-        'description': 'Bàn làm việc, ghế văn phòng, tủ hồ sơ',
-        'image': Icons.business_center
-      },
-      {
-        'name': 'Phòng tắm',
-        'icon': Icons.bathtub,
-        'description': 'Tủ lavabo, gương, kệ',
-        'image': Icons.bathroom
-      },
-      {
-        'name': 'Ban công',
-        'icon': Icons.balcony,
-        'description': 'Ghế ngoài trời, bàn cafe',
-        'image': Icons.deck
-      },
-    ];
-
-    return GridView.builder(
-      padding: const EdgeInsets.all(16),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        childAspectRatio: 0.85,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-      ),
-      itemCount: rooms.length,
-      itemBuilder: (context, index) {
-        final room = rooms[index];
-        return Card(
-          clipBehavior: Clip.antiAlias,
-          child: InkWell(
-            onTap: () {
-              // TODO: Navigate to room products
-            },
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Container(
-                    color: AppTheme.beige100,
-                    child: Center(
-                      child: Icon(
-                        room['image'] as IconData,
-                        size: 64,
-                        color: AppTheme.primary400,
-                      ),
-                    ),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(12.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(
-                            room['icon'] as IconData,
-                            size: 20,
-                            color: AppTheme.primary500,
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              room['name'] as String,
-                              style: Theme.of(context).textTheme.titleMedium,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        room['description'] as String,
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: AppTheme.char600,
-                            ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
 
   void _showFilterBottomSheet() {
     showModalBottomSheet(
