@@ -1,8 +1,10 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:model_viewer_plus/model_viewer_plus.dart';
 import '../constants/app_theme.dart';
 import '../models/product_model.dart';
 import '../service/api_client.dart';
+import '../service/model_cache_service.dart';
 
 class Product3DViewerPage extends StatefulWidget {
   final ProductModel product;
@@ -18,89 +20,114 @@ class Product3DViewerPage extends StatefulWidget {
 
 class _Product3DViewerPageState extends State<Product3DViewerPage> {
   late final ApiClient _apiClient;
-  bool _isLoading = false;
+  late final ModelCacheService _cacheService;
+  
+  bool _isDownloading = true;
   bool _hasError = false;
   String? _errorMessage;
-  String? _fullModelUrl;
-  String _loadingStatus = 'Initializing...';
+  String? _localModelPath; // File path local sau khi download
+  String? _remoteModelUrl; // URL gốc từ server
+  double _downloadProgress = 0.0;
+  String _loadingStatus = 'Đang kiểm tra cache...';
 
   @override
   void initState() {
     super.initState();
     _apiClient = ApiClient();
-    _validateModel();
+    _cacheService = ModelCacheService();
+    _initializeModel();
   }
 
-  void _handleJavaScriptMessage(String message) {
-    debugPrint('📱 JS Message: $message');
-    
-    if (message.startsWith('ERROR:')) {
-      setState(() {
-        _hasError = true;
-        _errorMessage = message.replaceFirst('ERROR:', '').trim();
-      });
-    } else if (message.startsWith('STATUS:')) {
-      setState(() {
-        _loadingStatus = message.replaceFirst('STATUS:', '').trim();
-      });
-    } else if (message == 'LOADED') {
-      setState(() {
-        _isLoading = false;
-      });
-      debugPrint('✅ Model loaded successfully via JS channel!');
-    }
-  }
-
-  void _validateModel() {
-    if (widget.product.model3DUrl == null || widget.product.model3DUrl!.isEmpty) {
-      setState(() {
-        _hasError = true;
-        _errorMessage = 'Sản phẩm không có model 3D';
-      });
-      return;
-    }
-
-    String url = widget.product.model3DUrl!;
-
-    // 1. Xử lý Relative URL
-    if (!url.startsWith('http')) {
-      url = _apiClient.getImageUrl(url);
-    }
-
-    // 2. FIX QUAN TRỌNG: Encode URL để xử lý khoảng trắng hoặc ký tự đặc biệt
-    // Ví dụ: "file name.glb" -> "file%20name.glb"
-    url = Uri.encodeFull(url);
-
-    // 3. Fix Cloudinary logic (Cải tiến)
-    // Cloudinary thường trả về http, nên đổi sang https để tránh lỗi Mixed Content
-    if (url.startsWith('http://')) {
-      url = url.replaceFirst('http://', 'https://');
-    }
-
-    // Xử lý chuyển đổi resource_type từ image sang raw cho file .glb trên Cloudinary
-    if (url.contains('cloudinary.com')) {
-      if (url.contains('/image/upload/')) {
-        url = url.replaceAll('/image/upload/', '/raw/upload/');
-      } else if (url.contains('/video/upload/')) {
-        // Đôi khi user upload nhầm vào video
-        url = url.replaceAll('/video/upload/', '/raw/upload/');
+  Future<void> _initializeModel() async {
+    try {
+      // 1. Validate model URL
+      if (widget.product.model3DUrl == null || widget.product.model3DUrl!.isEmpty) {
+        setState(() {
+          _hasError = true;
+          _errorMessage = 'Sản phẩm không có model 3D';
+          _isDownloading = false;
+        });
+        return;
       }
+
+      String url = widget.product.model3DUrl!;
+
+      // 2. Build full URL
+      if (!url.startsWith('http')) {
+        url = _apiClient.getImageUrl(url);
+      }
+
+      // 3. Encode URL và đảm bảo HTTPS
+      url = Uri.encodeFull(url);
+      if (url.startsWith('http://')) {
+        url = url.replaceFirst('http://', 'https://');
+      }
+
+      _remoteModelUrl = url;
+
+      debugPrint('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      debugPrint('🎯 Initializing 3D Model');
+      debugPrint('Product: ${widget.product.name}');
+      debugPrint('Product ID: ${widget.product.id}');
+      debugPrint('Remote URL: $_remoteModelUrl');
+      debugPrint('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
+      // 4. Download và cache model
+      setState(() {
+        _loadingStatus = 'Đang tải model 3D...';
+        _downloadProgress = 0.0;
+      });
+
+      final localPath = await _cacheService.downloadAndCacheModel(
+        productId: widget.product.id,
+        modelUrl: url,
+        onProgress: (progress) {
+          setState(() {
+            _downloadProgress = progress;
+            _loadingStatus = 'Đang tải ${(progress * 100).toStringAsFixed(0)}%';
+          });
+        },
+      );
+
+      if (localPath == null) {
+        throw Exception('Không thể tải model 3D. Vui lòng kiểm tra kết nối mạng.');
+      }
+
+      // 5. Verify file exists
+      final file = File(localPath);
+      if (!await file.exists()) {
+        throw Exception('File model không tồn tại sau khi tải');
+      }
+
+      setState(() {
+        _localModelPath = localPath;
+        _isDownloading = false;
+        _loadingStatus = 'Model đã sẵn sàng!';
+      });
+
+      debugPrint('✅ Model ready at: $localPath');
+
+    } catch (e, stackTrace) {
+      debugPrint('❌ Error initializing model: $e');
+      debugPrint('Stack trace: $stackTrace');
+      setState(() {
+        _hasError = true;
+        _errorMessage = e.toString();
+        _isDownloading = false;
+      });
     }
+  }
 
-    _fullModelUrl = url;
-
-    debugPrint('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    debugPrint('🔍 Model URL Validation');
-    debugPrint('Original: ${widget.product.model3DUrl}');
-    debugPrint('Final URL: $_fullModelUrl');
-    debugPrint('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-
-    // Validate format (Chấp nhận cả chữ hoa chữ thường)
-    final lowerUrl = url.toLowerCase();
-    if (!lowerUrl.contains('.glb') && !lowerUrl.contains('.gltf')) {
-      // Warning nhẹ nhưng vẫn cho chạy thử, vì có thể URL không hiện đuôi file
-      debugPrint('⚠️ Cảnh báo: URL không chứa đuôi .glb hoặc .gltf');
-    }
+  Future<void> _redownloadModel() async {
+    // Xóa cache cũ và download lại
+    await _cacheService.deleteCachedModel(widget.product.id);
+    setState(() {
+      _localModelPath = null;
+      _hasError = false;
+      _errorMessage = null;
+      _isDownloading = true;
+    });
+    await _initializeModel();
   }
 
   @override
@@ -134,11 +161,13 @@ class _Product3DViewerPageState extends State<Product3DViewerPage> {
           // 3D Viewer Area
           if (_hasError)
             _buildErrorView()
-          else
+          else if (_isDownloading)
+            _buildDownloadingView()
+          else if (_localModelPath != null)
             _build3DViewer(),
           
           // Controls overlay
-          if (!_hasError)
+          if (!_hasError && !_isDownloading && _localModelPath != null)
             Positioned(
               bottom: 0,
               left: 0,
@@ -150,21 +179,72 @@ class _Product3DViewerPageState extends State<Product3DViewerPage> {
     );
   }
 
-  Widget _buildLoadingView() {
+  Widget _buildDownloadingView() {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const CircularProgressIndicator(color: Colors.white),
-          const SizedBox(height: 16),
-          Text(
-            'Đang tải model 3D...',
-            style: TextStyle(
-              color: Colors.white70,
-              fontSize: 14,
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Icon
+            Icon(
+              Icons.download_for_offline,
+              size: 80,
+              color: AppTheme.primary500,
             ),
-          ),
-        ],
+            const SizedBox(height: 24),
+            
+            // Status text
+            Text(
+              _loadingStatus,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            
+            // Progress bar
+            SizedBox(
+              width: double.infinity,
+              child: Column(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: LinearProgressIndicator(
+                      value: _downloadProgress,
+                      minHeight: 8,
+                      backgroundColor: Colors.white24,
+                      valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primary500),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '${(_downloadProgress * 100).toStringAsFixed(0)}%',
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            
+            const SizedBox(height: 24),
+            
+            // Info text
+            Text(
+              'Model 3D sẽ được lưu trữ để xem nhanh hơn lần sau',
+              style: TextStyle(
+                color: Colors.white54,
+                fontSize: 12,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -191,14 +271,29 @@ class _Product3DViewerPageState extends State<Product3DViewerPage> {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
-            ElevatedButton.icon(
-              onPressed: () => Navigator.pop(context),
-              icon: const Icon(Icons.arrow_back),
-              label: const Text('Quay lại'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primary500,
-                foregroundColor: Colors.white,
-              ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                ElevatedButton.icon(
+                  onPressed: _redownloadModel,
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('Thử lại'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primary500,
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                OutlinedButton.icon(
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.arrow_back),
+                  label: const Text('Quay lại'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    side: const BorderSide(color: Colors.white),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -207,30 +302,32 @@ class _Product3DViewerPageState extends State<Product3DViewerPage> {
   }
 
   Widget _build3DViewer() {
+    if (_localModelPath == null) {
+      return _buildDownloadingView();
+    }
+
     // Sử dụng ảnh đầu tiên của sản phẩm làm poster với full URL
     final posterUrl = widget.product.images.isNotEmpty 
         ? _apiClient.getImageUrl(widget.product.images.first)
         : '';
     
+    // Sử dụng file:// scheme cho local file
+    final localFileUrl = 'file://$_localModelPath';
+    
+    debugPrint('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    debugPrint('🎨 Rendering ModelViewer');
+    debugPrint('Local file: $localFileUrl');
+    debugPrint('Poster: $posterUrl');
+    debugPrint('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    
     return ModelViewer(
-      key: ValueKey(_fullModelUrl),
-      src: _fullModelUrl ?? widget.product.model3DUrl!,
+      key: ValueKey(_localModelPath),
+      src: localFileUrl,
       alt: widget.product.name,
-      poster: posterUrl, // Hiển thị ảnh sản phẩm trong lúc load
-      loading: Loading.eager, // Eager để load ngay
-      reveal: Reveal.auto, // Auto reveal khi sẵn sàng
-      autoPlay: true, 
-      
-      // WebView debugging
-      debugLogging: true,
-      javascriptChannels: {
-        JavascriptChannel(
-          'FlutterChannel',
-          onMessageReceived: (message) {
-            _handleJavaScriptMessage(message.message);
-          },
-        ),
-      },
+      poster: posterUrl,
+      loading: Loading.eager,
+      reveal: Reveal.auto,
+      autoPlay: true,
       
       // AR & Interaction
       ar: true,
@@ -263,7 +360,7 @@ class _Product3DViewerPageState extends State<Product3DViewerPage> {
       onWebViewCreated: (controller) {
         debugPrint('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
         debugPrint('✅ 3D Model Viewer WebView Created');
-        debugPrint('📦 Model URL: $_fullModelUrl');
+        debugPrint('📦 Local Model Path: $_localModelPath');
         debugPrint('🖼️ Poster URL: $posterUrl');
         debugPrint('📱 Product: ${widget.product.name}');
         debugPrint('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
@@ -290,60 +387,26 @@ class _Product3DViewerPageState extends State<Product3DViewerPage> {
       ''',
       
       relatedJs: '''
-        function sendToFlutter(message) {
-          if (window.FlutterChannel) {
-            FlutterChannel.postMessage(message);
-          }
-        }
-        
-        sendToFlutter('STATUS:Initializing ModelViewer...');
-        
         const modelViewer = document.querySelector('model-viewer');
         
         if (!modelViewer) {
-          sendToFlutter('ERROR:Model viewer element not found');
+          console.error('❌ Model viewer element not found');
         } else {
-          sendToFlutter('STATUS:Model viewer element found');
-          sendToFlutter('STATUS:Model URL: ' + modelViewer.src);
+          console.log('✅ Model viewer initialized');
+          console.log('📦 Model src:', modelViewer.src);
           
           modelViewer.addEventListener('load', () => {
-            sendToFlutter('LOADED');
-            sendToFlutter('STATUS:Model loaded successfully!');
+            console.log('✅ Model loaded successfully from local file!');
           });
           
           modelViewer.addEventListener('error', (event) => {
-            const errorMsg = 'Model loading failed: ' + (event.message || event.type || 'Unknown error');
-            sendToFlutter('ERROR:' + errorMsg);
+            console.error('❌ Model loading error:', event);
           });
           
           modelViewer.addEventListener('progress', (event) => {
             const progress = (event.detail.totalProgress * 100).toFixed(0);
-            sendToFlutter('STATUS:Loading ' + progress + '%');
+            console.log('📊 Rendering progress:', progress + '%');
           });
-          
-          modelViewer.addEventListener('model-visibility', (event) => {
-            sendToFlutter('STATUS:Model visibility: ' + event.detail.visible);
-          });
-          
-          // Check if model file is accessible
-          fetch(modelViewer.src, { method: 'HEAD' })
-            .then(response => {
-              if (response.ok) {
-                sendToFlutter('STATUS:Model file accessible (HTTP ' + response.status + ')');
-              } else {
-                sendToFlutter('ERROR:Model file returned HTTP ' + response.status + ': ' + response.statusText);
-              }
-            })
-            .catch(error => {
-              sendToFlutter('ERROR:Cannot reach model file: ' + error.message);
-            });
-          
-          // Timeout check
-          setTimeout(() => {
-            if (!modelViewer.loaded) {
-              sendToFlutter('ERROR:Model loading timeout after 30 seconds');
-            }
-          }, 30000);
         }
       ''',
     );
@@ -391,20 +454,20 @@ class _Product3DViewerPageState extends State<Product3DViewerPage> {
                   ),
                 ),
                 // Debug info
-                if (_fullModelUrl != null) ...[
+                if (_localModelPath != null) ...[
                   const SizedBox(height: 8),
                   GestureDetector(
                     onLongPress: () {
-                      // Show full URL on long press
+                      // Show debug info on long press
                       showDialog(
                         context: context,
                         builder: (context) => AlertDialog(
                           title: const Text('Debug Info'),
                           content: SelectableText(
-                            'Model URL:\n$_fullModelUrl\n\n'
-                            'Status:\n$_loadingStatus\n\n'
-                            'Has Error: $_hasError\n'
-                            'Error Message: ${_errorMessage ?? "None"}'
+                            'Product ID:\n${widget.product.id}\n\n'
+                            'Local Path:\n$_localModelPath\n\n'
+                            'Remote URL:\n$_remoteModelUrl\n\n'
+                            'Status:\n$_loadingStatus'
                           ),
                           actions: [
                             TextButton(
@@ -425,20 +488,16 @@ class _Product3DViewerPageState extends State<Product3DViewerPage> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(
-                            _isLoading ? Icons.downloading : Icons.check_circle,
-                            color: _hasError ? Colors.red[300] : Colors.white60,
+                            Icons.check_circle,
+                            color: Colors.green[300],
                             size: 12,
                           ),
                           const SizedBox(width: 6),
-                          Flexible(
-                            child: Text(
-                              _loadingStatus,
-                              style: TextStyle(
-                                color: _hasError ? Colors.red[300] : Colors.white60,
-                                fontSize: 10,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                          Text(
+                            'Model đã cache • Nhấn giữ để xem info',
+                            style: TextStyle(
+                              color: Colors.white60,
+                              fontSize: 10,
                             ),
                           ),
                         ],
