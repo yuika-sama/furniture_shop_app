@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../constants/app_theme.dart';
 import '../models/product_model.dart';
@@ -6,6 +7,8 @@ import '../service/api_client.dart';
 import '../service/product_service.dart';
 import '../providers/cart_provider.dart';
 import '../providers/wishlist_provider.dart';
+import 'product_3d_viewer_page.dart';
+import 'product_ar_viewer_page.dart';
 
 class ProductDetailPage extends StatefulWidget {
   final String productSlug;
@@ -165,13 +168,37 @@ class _ProductDetailPageState extends State<ProductDetailPage>
       actions: [
         IconButton(
           icon: const Icon(Icons.share, color: Colors.black),
-          onPressed: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Tính năng chia sẻ đang phát triển')),
-            );
+          onPressed: () async {
+            final url = 'https://furniture-shop-frontend-two.vercel.app/products/${_product!.slug}';
+            // Copy to clipboard
+            await Clipboard.setData(ClipboardData(text: url));
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Đã copy đường dẫn sản phẩm'),
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+            }
           },
         ),
       ],
+    );
+  }
+
+  Widget _build3DButton(IconData icon, String label, VoidCallback onPressed) {
+    return ElevatedButton.icon(
+      onPressed: onPressed,
+      icon: Icon(icon, size: 18),
+      label: Text(label),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.white,
+        foregroundColor: AppTheme.primary500,
+        elevation: 2,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        minimumSize: Size.zero,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      ),
     );
   }
 
@@ -298,6 +325,37 @@ class _ProductDetailPageState extends State<ProductDetailPage>
                     fontWeight: FontWeight.bold,
                   ),
                 ),
+              ),
+            ),
+          // 3D và AR buttons
+          if (_product!.model3DUrl != null && _product!.model3DUrl!.isNotEmpty)
+            Positioned(
+              bottom: 16,
+              right: 16,
+              child: Row(
+                children: [
+                  _build3DButton(Icons.view_in_ar_outlined, '3D', () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => Product3DViewerPage(
+                          product: _product!,
+                        ),
+                      ),
+                    );
+                  }),
+                  const SizedBox(width: 8),
+                  _build3DButton(Icons.camera_alt_outlined, 'AR', () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ProductARViewerPage(
+                          product: _product!,
+                        ),
+                      ),
+                    );
+                  }),
+                ],
               ),
             ),
         ],
@@ -525,14 +583,21 @@ class _ProductDetailPageState extends State<ProductDetailPage>
                       spacing: 8,
                       runSpacing: 4,
                       children: _product!.colors.map((color) {
-                        return Chip(
-                          label: Text(
-                            color,
-                            style: const TextStyle(fontSize: 11),
+                        return Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: AppTheme.primary50,
+                            border: Border.all(color: AppTheme.primary200),
+                            borderRadius: BorderRadius.circular(16),
                           ),
-                          backgroundColor: Colors.grey[200],
-                          padding: EdgeInsets.zero,
-                          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          child: Text(
+                            color,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: AppTheme.primary700,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
                         );
                       }).toList(),
                     ),
@@ -645,9 +710,21 @@ class _ProductDetailPageState extends State<ProductDetailPage>
               spacing: 8,
               runSpacing: 8,
               children: _product!.colors.map((color) {
-                return Chip(
-                  label: Text(color),
-                  backgroundColor: AppTheme.primary100,
+                return Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primary50,
+                    border: Border.all(color: AppTheme.primary200),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Text(
+                    color,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: AppTheme.primary700,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
                 );
               }).toList(),
             ),
@@ -663,9 +740,21 @@ class _ProductDetailPageState extends State<ProductDetailPage>
               spacing: 8,
               runSpacing: 8,
               children: _product!.materials.map((material) {
-                return Chip(
-                  label: Text(material),
-                  backgroundColor: AppTheme.primary100,
+                return Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: AppTheme.beige100,
+                    border: Border.all(color: AppTheme.beige200),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Text(
+                    material,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: AppTheme.char800,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
                 );
               }).toList(),
             ),

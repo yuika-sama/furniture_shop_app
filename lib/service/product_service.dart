@@ -176,39 +176,6 @@ class ProductService {
     }
   }
 
-  /// [GET] /api/products/related/:productId - Lấy sản phẩm liên quan
-  // Future<Map<String, dynamic>> getRelatedProducts(String productId, {int limit = 6}) async {
-  //   try {
-  //     final response = await _apiClient.dio.get(
-  //       '/api/products/related/$productId',
-  //       queryParameters: {'limit': limit},
-  //     );
-
-  //     if (response.data['success'] == true) {
-  //       final productsJson = response.data['products'] as List;
-  //       final products = productsJson
-  //           .map((json) => ProductModel.fromJson(json))
-  //           .toList();
-
-  //       return {
-  //         'success': true,
-  //         'products': products,
-  //       };
-  //     }
-
-  //     return {
-  //       'success': false,
-  //       'message': response.data['message'] ?? 'Lỗi không xác định',
-  //     };
-  //   } on DioException catch (e) {
-  //     return {
-  //       'success': false,
-  //       'message': e.response?.data['message'] ?? 'Lỗi kết nối',
-  //       'error': e.message,
-  //     };
-  //   }
-  // }
-
   /// [GET] /api/products/new-arrivals - Lấy sản phẩm mới
   /// 
   /// Note: Backend sort by createdAt descending
