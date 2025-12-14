@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import '../constants/app_theme.dart';
-import '../providers/product_provider.dart';
+import '../models/category_model.dart';
+import '../service/category_service.dart';
+import '../service/api_client.dart';
+import 'products_page.dart';
 
 class SearchPage extends StatefulWidget {
   const SearchPage({super.key});
@@ -12,15 +14,20 @@ class SearchPage extends StatefulWidget {
 
 class _SearchPageState extends State<SearchPage> {
   final TextEditingController _searchController = TextEditingController();
-  bool _isSearching = false;
-  List<String> _recentSearches = [
+  late final CategoryService _categoryService;
+
+  // Biến loading state cho category
+  bool _isLoadingCategories = true;
+  List<CategoryModel> _categories = [];
+
+  final List<String> _recentSearches = [
     'Ghế sofa',
     'Bàn làm việc',
     'Giường ngủ',
     'Tủ quần áo',
   ];
 
-  List<String> _popularSearches = [
+  final List<String> _popularSearches = [
     'Bàn ăn gỗ',
     'Ghế văn phòng',
     'Kệ tivi',
@@ -32,52 +39,115 @@ class _SearchPageState extends State<SearchPage> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    _categoryService = CategoryService(ApiClient());
+    _loadCategories();
+  }
+
+  @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
   }
 
+  Future<void> _loadCategories() async {
+    try {
+      final result = await _categoryService.getAllCategories();
+      if (result['success'] == true && mounted) {
+        setState(() {
+          _categories = result['categories'] ?? [];
+          _isLoadingCategories = false;
+        });
+      } else if (mounted) {
+        setState(() {
+          _isLoadingCategories = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading categories: $e');
+      if (mounted) {
+        setState(() {
+          _isLoadingCategories = false;
+        });
+      }
+    }
+  }
+
+  // Hàm helper lấy icon đưa ra ngoài để tối ưu
+  IconData _getCategoryIcon(String name) {
+    final nameLower = name.toLowerCase();
+    if (nameLower.contains('phòng khách') || nameLower.contains('living')) {
+      return Icons.weekend;
+    } else if (nameLower.contains('phòng ngủ') || nameLower.contains('bedroom') || nameLower.contains('giường')) {
+      return Icons.bed;
+    } else if (nameLower.contains('nhà bếp') || nameLower.contains('kitchen') || nameLower.contains('bếp')) {
+      return Icons.kitchen;
+    } else if (nameLower.contains('văn phòng') || nameLower.contains('office') || nameLower.contains('bàn làm việc')) {
+      return Icons.desk;
+    } else if (nameLower.contains('phòng ăn') || nameLower.contains('dining')) {
+      return Icons.dining;
+    } else if (nameLower.contains('phòng tắm') || nameLower.contains('bathroom')) {
+      return Icons.bathtub;
+    } else {
+      return Icons.chair;
+    }
+  }
+
   void _performSearch(String query) {
     if (query.trim().isEmpty) return;
-    
+
     setState(() {
-      _isSearching = true;
-      if (!_recentSearches.contains(query)) {
-        _recentSearches.insert(0, query);
-        if (_recentSearches.length > 5) {
-          _recentSearches.removeLast();
-        }
+      // Xóa nếu đã tồn tại để đưa lên đầu
+      if (_recentSearches.contains(query)) {
+        _recentSearches.remove(query);
+      }
+      _recentSearches.insert(0, query);
+
+      // Giới hạn lịch sử tìm kiếm là 5
+      if (_recentSearches.length > 5) {
+        _recentSearches.removeLast();
       }
     });
 
-    // TODO: Implement actual search with ProductProvider
+    // Navigate to ProductsPage with search query
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ProductsPage(
+          searchQuery: query,
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        // Giả sử AppTheme của bạn có màu nền, nếu không hãy thêm backgroundColor
         title: TextField(
           controller: _searchController,
           autofocus: true,
           style: const TextStyle(color: Colors.white),
+          textInputAction: TextInputAction.search, // Hiển thị nút Search trên bàn phím
           decoration: InputDecoration(
             hintText: 'Tìm kiếm sản phẩm...',
             hintStyle: TextStyle(color: Colors.white.withOpacity(0.7)),
             border: InputBorder.none,
+            // Nút xóa chỉ hiện khi có text
             suffixIcon: _searchController.text.isNotEmpty
                 ? IconButton(
-                    icon: const Icon(Icons.clear, color: Colors.white),
-                    onPressed: () {
-                      setState(() {
-                        _searchController.clear();
-                        _isSearching = false;
-                      });
-                    },
-                  )
+              icon: const Icon(Icons.clear, color: Colors.white),
+              onPressed: () {
+                _searchController.clear();
+                setState(() {}); // Rebuild để ẩn nút clear
+              },
+            )
                 : null,
           ),
           onChanged: (value) {
+            // Rebuild để hiển thị/ẩn nút clear
             setState(() {});
           },
           onSubmitted: _performSearch,
@@ -91,7 +161,8 @@ class _SearchPageState extends State<SearchPage> {
           ),
         ],
       ),
-      body: _isSearching ? _buildSearchResults() : _buildSearchSuggestions(),
+      // Luôn hiển thị gợi ý, vì khi search sẽ chuyển trang khác
+      body: _buildSearchSuggestions(),
     );
   }
 
@@ -108,8 +179,8 @@ class _SearchPageState extends State<SearchPage> {
                 Text(
                   'Tìm kiếm gần đây',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 TextButton(
                   onPressed: () {
@@ -122,29 +193,32 @@ class _SearchPageState extends State<SearchPage> {
               ],
             ),
             const SizedBox(height: 8),
+            // Sử dụng ListView.separated hoặc map đều được, ở đây dùng map như cũ
             ..._recentSearches.map((search) => ListTile(
-                  leading: const Icon(Icons.history, color: AppTheme.char500),
-                  title: Text(search),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.close, size: 20),
-                    onPressed: () {
-                      setState(() {
-                        _recentSearches.remove(search);
-                      });
-                    },
-                  ),
-                  onTap: () {
-                    _searchController.text = search;
-                    _performSearch(search);
-                  },
-                )),
+              contentPadding: EdgeInsets.zero, // Tối ưu padding
+              leading: const Icon(Icons.history, color: AppTheme.char500),
+              title: Text(search),
+              trailing: IconButton(
+                icon: const Icon(Icons.close, size: 20),
+                onPressed: () {
+                  setState(() {
+                    _recentSearches.remove(search);
+                  });
+                },
+              ),
+              onTap: () {
+                _searchController.text = search;
+                _performSearch(search);
+              },
+            )),
             const SizedBox(height: 24),
           ],
+
           Text(
             'Tìm kiếm phổ biến',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+              fontWeight: FontWeight.bold,
+            ),
           ),
           const SizedBox(height: 12),
           Wrap(
@@ -163,11 +237,12 @@ class _SearchPageState extends State<SearchPage> {
             }).toList(),
           ),
           const SizedBox(height: 32),
+
           Text(
             'Danh mục nổi bật',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+              fontWeight: FontWeight.bold,
+            ),
           ),
           const SizedBox(height: 12),
           _buildCategoryGrid(),
@@ -177,12 +252,23 @@ class _SearchPageState extends State<SearchPage> {
   }
 
   Widget _buildCategoryGrid() {
-    final categories = [
-      {'name': 'Phòng khách', 'icon': Icons.weekend, 'count': '156'},
-      {'name': 'Phòng ngủ', 'icon': Icons.bed, 'count': '98'},
-      {'name': 'Nhà bếp', 'icon': Icons.kitchen, 'count': '87'},
-      {'name': 'Văn phòng', 'icon': Icons.desk, 'count': '124'},
-    ];
+    if (_isLoadingCategories) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(20.0),
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    if (_categories.isEmpty) {
+      return const Center(
+        child: Text("Không có danh mục nào"),
+      );
+    }
+
+    // Lấy 4 item đầu tiên, hoặc ít hơn nếu danh sách < 4
+    final displayCategories = _categories.take(4).toList();
 
     return GridView.builder(
       shrinkWrap: true,
@@ -193,13 +279,22 @@ class _SearchPageState extends State<SearchPage> {
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
       ),
-      itemCount: categories.length,
+      itemCount: displayCategories.length,
       itemBuilder: (context, index) {
-        final category = categories[index];
+        final category = displayCategories[index];
         return Card(
+          elevation: 2, // Thêm chút bóng đổ cho đẹp
           child: InkWell(
             onTap: () {
-              // TODO: Navigate to category
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ProductsPage(
+                    categoryId: category.id,
+                    // Có thể truyền thêm tên category nếu ProductsPage hỗ trợ để hiển thị title
+                  ),
+                ),
+              );
             },
             borderRadius: BorderRadius.circular(12),
             child: Padding(
@@ -208,21 +303,26 @@ class _SearchPageState extends State<SearchPage> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(
-                    category['icon'] as IconData,
+                    _getCategoryIcon(category.name),
                     size: 32,
                     color: AppTheme.primary500,
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    category['name'] as String,
+                    category.name,
                     style: Theme.of(context).textTheme.titleSmall,
                     textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
+                  const SizedBox(height: 4),
                   Text(
-                    '${category['count']} sản phẩm',
+                    '${category.productCount} sản phẩm',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppTheme.char500,
-                        ),
+                      color: AppTheme.char500,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),
@@ -230,179 +330,6 @@ class _SearchPageState extends State<SearchPage> {
           ),
         );
       },
-    );
-  }
-
-  Widget _buildSearchResults() {
-    // Mock search results
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        Text(
-          'Kết quả tìm kiếm cho "${_searchController.text}"',
-          style: Theme.of(context).textTheme.titleMedium,
-        ),
-        const SizedBox(height: 16),
-        _buildFilterChips(),
-        const SizedBox(height: 16),
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            childAspectRatio: 0.7,
-            crossAxisSpacing: 12,
-            mainAxisSpacing: 12,
-          ),
-          itemCount: 6,
-          itemBuilder: (context, index) {
-            return _buildProductCard(index);
-          },
-        ),
-      ],
-    );
-  }
-
-  Widget _buildFilterChips() {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: [
-          FilterChip(
-            label: const Text('Tất cả'),
-            selected: true,
-            onSelected: (value) {},
-            selectedColor: AppTheme.primary100,
-          ),
-          const SizedBox(width: 8),
-          FilterChip(
-            label: const Text('Giá thấp đến cao'),
-            selected: false,
-            onSelected: (value) {},
-          ),
-          const SizedBox(width: 8),
-          FilterChip(
-            label: const Text('Đánh giá cao'),
-            selected: false,
-            onSelected: (value) {},
-          ),
-          const SizedBox(width: 8),
-          FilterChip(
-            label: const Text('Mới nhất'),
-            selected: false,
-            onSelected: (value) {},
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildProductCard(int index) {
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: Stack(
-              children: [
-                Container(
-                  color: AppTheme.beige100,
-                  child: const Center(
-                    child: Icon(
-                      Icons.chair,
-                      size: 64,
-                      color: AppTheme.primary300,
-                    ),
-                  ),
-                ),
-                Positioned(
-                  top: 8,
-                  right: 8,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppTheme.error,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: const Text(
-                      '-20%',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Sản phẩm ${index + 1}',
-                  style: Theme.of(context).textTheme.titleSmall,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    Text(
-                      '₫${((index + 1) * 800000).toStringAsFixed(0)}',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            decoration: TextDecoration.lineThrough,
-                            color: AppTheme.char500,
-                          ),
-                    ),
-                    const SizedBox(width: 4),
-                    Expanded(
-                      child: Text(
-                        '₫${((index + 1) * 640000).toStringAsFixed(0)}',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: AppTheme.primary500,
-                              fontWeight: FontWeight.bold,
-                            ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.star,
-                      size: 14,
-                      color: AppTheme.warning,
-                    ),
-                    const SizedBox(width: 2),
-                    Text(
-                      '4.5',
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      '(${(index + 1) * 10})',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppTheme.char500,
-                          ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

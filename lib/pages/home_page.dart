@@ -7,6 +7,7 @@ import '../providers/promotion_provider.dart';
 import '../providers/wishlist_provider.dart';
 import '../components/app_bar_actions.dart';
 import '../components/product_card.dart';
+import 'products_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -101,7 +102,12 @@ class _HomePageState extends State<HomePage> {
                   ),
                   TextButton(
                     onPressed: () {
-                      // TODO: Navigate to all products
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ProductsPage(),
+                        ),
+                      );
                     },
                     child: const Text('Xem tất cả'),
                   ),
@@ -140,7 +146,12 @@ class _HomePageState extends State<HomePage> {
                   ),
                   TextButton(
                     onPressed: () {
-                      // TODO: Navigate to best sellers
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ProductsPage(),
+                        ),
+                      );
                     },
                     child: const Text('Xem tất cả'),
                   ),
@@ -391,23 +402,35 @@ class _HomePageState extends State<HomePage> {
             itemCount: categories.length,
             itemBuilder: (context, index) {
               final category = categories[index];
-              return Container(
-                width: 180,
-                height: 200,
-                margin: const EdgeInsets.only(right: 12),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
+              return InkWell(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ProductsPage(
+                        categoryId: category.id,
+                      ),
                     ),
-                  ],
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(16),
-                  child: Stack(
+                  );
+                },
+                borderRadius: BorderRadius.circular(16),
+                child: Container(
+                  width: 180,
+                  height: 200,
+                  margin: const EdgeInsets.only(right: 12),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: Stack(
                     fit: StackFit.expand,
                     children: [
                       // Background image from API
@@ -487,6 +510,7 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ],
                   ),
+                ),
                 ),
               );
             },
