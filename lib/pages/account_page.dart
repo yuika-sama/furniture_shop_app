@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 import '../constants/app_theme.dart';
 import '../providers/user_provider.dart';
 import '../providers/auth_provider.dart';
+import '../service/user_service.dart';
+import '../service/api_client.dart';
 import 'login_page.dart';
 import 'register_page.dart';
+import 'cart_page.dart';
+import 'address_management_page.dart';
 
 class AccountPage extends StatefulWidget {
   const AccountPage({super.key});
@@ -14,8 +20,12 @@ class AccountPage extends StatefulWidget {
 }
 
 class _AccountPageState extends State<AccountPage> {
+  late final UserService _userService;
+  final ImagePicker _imagePicker = ImagePicker();
+
   @override
   void initState() {
+    _userService = UserService(ApiClient());
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadUserProfile();
@@ -45,35 +55,18 @@ class _AccountPageState extends State<AccountPage> {
                   children: [
                     const SizedBox(height: 8),
                     _buildMenuSection(
-                      'Đơn hàng',
+                      'Tài khoản',
                       [
                         _MenuItem(
                           icon: Icons.shopping_bag_outlined,
                           title: 'Đơn hàng của tôi',
                           onTap: () {
-                            // TODO: Navigate to orders
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => const CartPage()),
+                            );
                           },
                         ),
-                        _MenuItem(
-                          icon: Icons.favorite_border,
-                          title: 'Sản phẩm yêu thích',
-                          onTap: () {
-                            // TODO: Navigate to wishlist
-                          },
-                        ),
-                        _MenuItem(
-                          icon: Icons.rate_review_outlined,
-                          title: 'Đánh giá của tôi',
-                          onTap: () {
-                            // TODO: Navigate to reviews
-                          },
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    _buildMenuSection(
-                      'Cài đặt tài khoản',
-                      [
                         _MenuItem(
                           icon: Icons.person_outline,
                           title: 'Thông tin cá nhân',
@@ -85,7 +78,10 @@ class _AccountPageState extends State<AccountPage> {
                           icon: Icons.location_on_outlined,
                           title: 'Địa chỉ giao hàng',
                           onTap: () {
-                            // TODO: Navigate to addresses
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => const AddressManagementPage()),
+                            );
                           },
                         ),
                         _MenuItem(
@@ -93,40 +89,6 @@ class _AccountPageState extends State<AccountPage> {
                           title: 'Đổi mật khẩu',
                           onTap: () {
                             _showChangePassword();
-                          },
-                        ),
-                        _MenuItem(
-                          icon: Icons.notifications_outlined,
-                          title: 'Thông báo',
-                          onTap: () {
-                            // TODO: Navigate to notification settings
-                          },
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    _buildMenuSection(
-                      'Hỗ trợ',
-                      [
-                        _MenuItem(
-                          icon: Icons.help_outline,
-                          title: 'Trung tâm trợ giúp',
-                          onTap: () {
-                            // TODO: Navigate to help center
-                          },
-                        ),
-                        _MenuItem(
-                          icon: Icons.description_outlined,
-                          title: 'Điều khoản & chính sách',
-                          onTap: () {
-                            // TODO: Navigate to terms
-                          },
-                        ),
-                        _MenuItem(
-                          icon: Icons.info_outline,
-                          title: 'Về chúng tôi',
-                          onTap: () {
-                            // TODO: Navigate to about
                           },
                         ),
                       ],
@@ -182,30 +144,57 @@ class _AccountPageState extends State<AccountPage> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const SizedBox(height: 40),
-                CircleAvatar(
-                  radius: 40,
-                  backgroundColor: Colors.white,
-                  child: user?.avatar != null
-                      ? ClipOval(
-                          child: Image.network(
-                            user!.avatar!,
-                            width: 80,
-                            height: 80,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) {
-                              return const Icon(
-                                Icons.person,
-                                size: 40,
-                                color: AppTheme.primary500,
-                              );
-                            },
+                Stack(
+                  children: [
+                    CircleAvatar(
+                      radius: 40,
+                      backgroundColor: Colors.white,
+                      child: user?.avatar != null
+                          ? ClipOval(
+                              child: Image.network(
+                                user!.avatar!,
+                                width: 80,
+                                height: 80,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return const Icon(
+                                    Icons.person,
+                                    size: 40,
+                                    color: AppTheme.primary500,
+                                  );
+                                },
+                              ),
+                            )
+                          : const Icon(
+                              Icons.person,
+                              size: 40,
+                              color: AppTheme.primary500,
+                            ),
+                    ),
+                    Positioned(
+                      bottom: 0,
+                      right: 0,
+                      child: InkWell(
+                        onTap: _showAvatarOptions,
+                        child: Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: AppTheme.primary500,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: Colors.white,
+                              width: 2,
+                            ),
                           ),
-                        )
-                      : const Icon(
-                          Icons.person,
-                          size: 40,
-                          color: AppTheme.primary500,
+                          child: const Icon(
+                            Icons.camera_alt,
+                            size: 16,
+                            color: Colors.white,
+                          ),
                         ),
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 12),
                 Text(
@@ -329,6 +318,12 @@ class _AccountPageState extends State<AccountPage> {
   }
 
   void _showEditProfile() {
+    final userProvider = context.read<UserProvider>();
+    final user = userProvider.currentUser;
+
+    final fullNameController = TextEditingController(text: user?.fullName ?? '');
+    final phoneController = TextEditingController(text: user?.phone ?? '');
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -349,6 +344,7 @@ class _AccountPageState extends State<AccountPage> {
                 ),
                 const SizedBox(height: 24),
                 TextField(
+                  controller: fullNameController,
                   decoration: const InputDecoration(
                     labelText: 'Họ và tên',
                     prefixIcon: Icon(Icons.person),
@@ -356,10 +352,12 @@ class _AccountPageState extends State<AccountPage> {
                 ),
                 const SizedBox(height: 16),
                 TextField(
+                  controller: phoneController,
                   decoration: const InputDecoration(
                     labelText: 'Số điện thoại',
                     prefixIcon: Icon(Icons.phone),
                   ),
+                  keyboardType: TextInputType.phone,
                 ),
                 const SizedBox(height: 24),
                 Row(
@@ -373,9 +371,12 @@ class _AccountPageState extends State<AccountPage> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: ElevatedButton(
-                        onPressed: () {
-                          // TODO: Update profile
-                          Navigator.pop(context);
+                        onPressed: () async {
+                          await _handleUpdateProfile(
+                            fullNameController.text,
+                            phoneController.text,
+                          );
+                          if (mounted) Navigator.pop(context);
                         },
                         child: const Text('Lưu'),
                       ),
@@ -390,7 +391,43 @@ class _AccountPageState extends State<AccountPage> {
     );
   }
 
+  Future<void> _handleUpdateProfile(String fullName, String phone) async {
+    try {
+      await _userService.updateProfile(
+        fullName: fullName.isNotEmpty ? fullName : null,
+        phone: phone.isNotEmpty ? phone : null,
+      );
+
+      if (mounted) {
+        await context.read<UserProvider>().loadProfile();
+        // Reload page
+        setState(() {});
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Cập nhật thông tin thành công'),
+            backgroundColor: AppTheme.success,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Lỗi: ${e.toString()}'),
+            backgroundColor: AppTheme.error,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
   void _showChangePassword() {
+    final currentPasswordController = TextEditingController();
+    final newPasswordController = TextEditingController();
+    final confirmPasswordController = TextEditingController();
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -411,6 +448,7 @@ class _AccountPageState extends State<AccountPage> {
                 ),
                 const SizedBox(height: 24),
                 TextField(
+                  controller: currentPasswordController,
                   obscureText: true,
                   decoration: const InputDecoration(
                     labelText: 'Mật khẩu hiện tại',
@@ -419,14 +457,17 @@ class _AccountPageState extends State<AccountPage> {
                 ),
                 const SizedBox(height: 16),
                 TextField(
+                  controller: newPasswordController,
                   obscureText: true,
                   decoration: const InputDecoration(
                     labelText: 'Mật khẩu mới',
                     prefixIcon: Icon(Icons.lock),
+                    helperText: 'Ít nhất 6 ký tự',
                   ),
                 ),
                 const SizedBox(height: 16),
                 TextField(
+                  controller: confirmPasswordController,
                   obscureText: true,
                   decoration: const InputDecoration(
                     labelText: 'Xác nhận mật khẩu mới',
@@ -445,9 +486,22 @@ class _AccountPageState extends State<AccountPage> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: ElevatedButton(
-                        onPressed: () {
-                          // TODO: Change password
-                          Navigator.pop(context);
+                        onPressed: () async {
+                          if (newPasswordController.text != confirmPasswordController.text) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Mật khẩu xác nhận không khớp'),
+                                backgroundColor: AppTheme.error,
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                            return;
+                          }
+                          await _handleChangePassword(
+                            currentPasswordController.text,
+                            newPasswordController.text,
+                          );
+                          if (mounted) Navigator.pop(context);
                         },
                         child: const Text('Đổi mật khẩu'),
                       ),
@@ -460,6 +514,142 @@ class _AccountPageState extends State<AccountPage> {
         );
       },
     );
+  }
+
+  void _showAvatarOptions() {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        return SafeArea(
+          child: Wrap(
+            children: [
+              ListTile(
+                leading: const Icon(Icons.photo_library),
+                title: const Text('Chọn từ thư viện'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickImage(ImageSource.gallery);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.photo_camera),
+                title: const Text('Chụp ảnh mới'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickImage(ImageSource.camera);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.cancel),
+                title: const Text('Hủy'),
+                onTap: () => Navigator.pop(context),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _pickImage(ImageSource source) async {
+    try {
+      final XFile? pickedFile = await _imagePicker.pickImage(
+        source: source,
+        maxWidth: 1024,
+        maxHeight: 1024,
+        imageQuality: 85,
+      );
+
+      if (pickedFile != null) {
+        await _uploadAvatar(File(pickedFile.path));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Lỗi chọn ảnh: ${e.toString()}'),
+            backgroundColor: AppTheme.error,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _uploadAvatar(File imageFile) async {
+    // Show loading
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: CircularProgressIndicator(),
+      ),
+    );
+
+    try {
+      await _userService.uploadAvatar(imageFile);
+
+      if (mounted) {
+        // Close loading dialog
+        Navigator.pop(context);
+        
+        // Reload user profile
+        await context.read<UserProvider>().loadProfile();
+        
+        // Reload page
+        setState(() {});
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Cập nhật ảnh đại diện thành công'),
+            backgroundColor: AppTheme.success,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        // Close loading dialog
+        Navigator.pop(context);
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Lỗi: ${e.toString()}'),
+            backgroundColor: AppTheme.error,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _handleChangePassword(String currentPassword, String newPassword) async {
+    try {
+      await _userService.changePassword(
+        currentPassword: currentPassword,
+        newPassword: newPassword,
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Đổi mật khẩu thành công'),
+            backgroundColor: AppTheme.success,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Lỗi: ${e.toString()}'),
+            backgroundColor: AppTheme.error,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
   }
 
   Future<void> _handleLogout() async {
