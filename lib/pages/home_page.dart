@@ -8,6 +8,7 @@ import '../providers/wishlist_provider.dart';
 import '../components/app_bar_actions.dart';
 import '../components/product_card.dart';
 import 'products_page.dart';
+import 'product_detail_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -542,6 +543,8 @@ class _HomePageState extends State<HomePage> {
         final isFavorite = wishlistProvider.isInWishlist(product.id);
 
         return ProductCard(
+          productId: product.id,
+          productSlug: product.slug,
           imageUrl: product.images.isNotEmpty 
               ? product.images[0] 
               : 'https://via.placeholder.com/400x400?text=${Uri.encodeComponent(product.name)}',
@@ -551,8 +554,15 @@ class _HomePageState extends State<HomePage> {
           price: product.price,
           isFavorite: isFavorite,
           onTap: () {
-            // TODO: Navigate to product detail page
-            debugPrint('Tapped on: ${product.name}');
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ProductDetailPage(
+                  productSlug: product.slug,
+                  initialProduct: product,
+                ),
+              ),
+            );
           },
           onAddToCart: () {
             // TODO: Add to cart using CartProvider
@@ -607,6 +617,8 @@ class _HomePageState extends State<HomePage> {
         final isFavorite = wishlistProvider.isInWishlist(product.id);
 
         return ProductCard(
+          productId: product.id,
+          productSlug: product.slug,
           imageUrl: product.images.isNotEmpty 
               ? product.images[0] 
               : 'https://via.placeholder.com/400x400?text=${Uri.encodeComponent(product.name)}',
@@ -616,8 +628,15 @@ class _HomePageState extends State<HomePage> {
           price: product.price,
           isFavorite: isFavorite,
           onTap: () {
-            // TODO: Navigate to product detail page
-            debugPrint('Tapped on best seller: ${product.name}');
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ProductDetailPage(
+                  productSlug: product.slug,
+                  initialProduct: product,
+                ),
+              ),
+            );
           },
           onAddToCart: () {
             // TODO: Add to cart using CartProvider

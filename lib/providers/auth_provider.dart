@@ -8,6 +8,9 @@ import '../service/token_storage_service.dart';
 /// Quản lý trạng thái authentication trong app
 class AuthProvider with ChangeNotifier {
   final AuthService _authService;
+  
+  // Callbacks to clear other providers when logout
+  Function()? onLogout;
 
   AuthProvider(AuthService authService) : _authService = authService;
   
@@ -116,6 +119,12 @@ class AuthProvider with ChangeNotifier {
     await _authService.logout();
     _currentUser = null;
     _errorMessage = null;
+    
+    // Clear other providers (cart, wishlist, user, etc.)
+    if (onLogout != null) {
+      onLogout!();
+    }
+    
     notifyListeners();
   }
 
@@ -140,6 +149,20 @@ class AuthProvider with ChangeNotifier {
   /// Clear error message
   void clearError() {
     _errorMessage = null;
+    notifyListeners();
+  }
+
+  /// Handle auto logout when token expired (called from ApiClient)
+  Future<void> handleUnauthorized() async {
+    print('🚪 Auto logout - Token expired or invalid');
+    _currentUser = null;
+    _errorMessage = 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.';
+    
+    // Clear other providers (cart, wishlist, user, etc.)
+    if (onLogout != null) {
+      onLogout!();
+    }
+    
     notifyListeners();
   }
 }

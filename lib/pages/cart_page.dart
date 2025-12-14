@@ -4,6 +4,7 @@ import '../constants/app_theme.dart';
 import '../providers/cart_provider.dart';
 import '../providers/auth_provider.dart';
 import '../pages/login_page.dart';
+import 'product_detail_page.dart';
 
 class CartPage extends StatefulWidget {
   const CartPage({super.key});
@@ -139,31 +140,46 @@ class _CartPageState extends State<CartPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Product Image
-            Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                color: AppTheme.beige100,
-                borderRadius: BorderRadius.circular(8),
+            GestureDetector(
+              onTap: product?.slug != null
+                  ? () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ProductDetailPage(
+                            productSlug: product!.slug,
+                            initialProduct: product,
+                          ),
+                        ),
+                      );
+                    }
+                  : null,
+              child: Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  color: AppTheme.beige100,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: imageUrl != null
+                    ? Image.network(
+                        imageUrl,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return const Icon(
+                            Icons.image_not_supported,
+                            size: 40,
+                            color: AppTheme.char400,
+                          );
+                        },
+                      )
+                    : const Icon(
+                        Icons.chair,
+                        size: 40,
+                        color: AppTheme.primary400,
+                      ),
               ),
-              clipBehavior: Clip.antiAlias,
-              child: imageUrl != null
-                  ? Image.network(
-                      imageUrl,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return const Icon(
-                          Icons.image_not_supported,
-                          size: 40,
-                          color: AppTheme.char400,
-                        );
-                      },
-                    )
-                  : const Icon(
-                      Icons.chair,
-                      size: 40,
-                      color: AppTheme.primary400,
-                    ),
             ),
             const SizedBox(width: 12),
             // Product Details
@@ -175,11 +191,26 @@ class _CartPageState extends State<CartPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Expanded(
-                        child: Text(
-                          product?.name ?? 'Tên sản phẩm',
-                          style: Theme.of(context).textTheme.titleMedium,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
+                        child: GestureDetector(
+                          onTap: product?.slug != null
+                              ? () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => ProductDetailPage(
+                                        productSlug: product!.slug,
+                                        initialProduct: product,
+                                      ),
+                                    ),
+                                  );
+                                }
+                              : null,
+                          child: Text(
+                            product?.name ?? 'Tên sản phẩm',
+                            style: Theme.of(context).textTheme.titleMedium,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
                       ),
                       IconButton(

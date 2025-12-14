@@ -5,8 +5,9 @@ import 'token_storage_service.dart';
 class ApiClient {
   late Dio dio;
   String baseUrl = "https://furniture-shop-backend.vercel.app";
+  Function()? onUnauthorized;
 
-  ApiClient() {
+  ApiClient({this.onUnauthorized}) {
     dio = Dio(
       BaseOptions(
         baseUrl: baseUrl,
@@ -43,10 +44,19 @@ class ApiClient {
         print('❌ [${e.response?.statusCode}] ${e.requestOptions.uri}');
         print('   Error: ${e.message}');
         
-        if (e.response?.statusCode == 401) {
+        // Handle 401 (Unauthorized) or 403 (Forbidden) - Token expired or invalid
+        if (e.response?.statusCode == 401 || e.response?.statusCode == 403) {
+          print('🔒 Token expired or invalid - Auto logout');
+          
+          // Clear all stored tokens
           await TokenStorageService.clearAll();
-          // TODO: Navigate to login
+          
+          // Notify app to logout (if callback is set)
+          if (onUnauthorized != null) {
+            onUnauthorized!();
+          }
         }
+        
         return handler.next(e);
       },
     ));

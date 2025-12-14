@@ -45,7 +45,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        // ApiClient - single instance
+        // ApiClient - single instance (will be configured after AuthProvider is created)
         Provider(create: (_) => ApiClient()),
 
         // Services - inject ApiClient

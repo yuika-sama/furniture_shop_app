@@ -12,6 +12,7 @@ import '../providers/cart_provider.dart';
 import '../providers/wishlist_provider.dart';
 import '../providers/auth_provider.dart';
 import 'login_page.dart';
+import 'product_detail_page.dart';
 
 class ProductsPage extends StatefulWidget {
   final String? categoryId;
@@ -536,116 +537,129 @@ class _ProductsPageState extends State<ProductsPage> {
     final wishlistProvider = context.watch<WishlistProvider>();
     final isInWishlist = wishlistProvider.isInWishlist(product.id);
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Row(
-          children: [
-            Container(
-              width: 100,
-              height: 100,
-              decoration: BoxDecoration(
-                color: AppTheme.beige100,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              clipBehavior: Clip.antiAlias,
-              child: product.images.isNotEmpty
-                  ? Image.network(
-                      product.images.first,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return const Icon(
-                          Icons.image_not_supported,
-                          size: 40,
-                          color: AppTheme.char400,
-                        );
-                      },
-                    )
-                  : const Icon(
-                      Icons.chair,
-                      size: 40,
-                      color: AppTheme.primary400,
-                    ),
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ProductDetailPage(
+              productSlug: product.slug,
+              initialProduct: product,
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (product.category != null || product.brand != null)
+          ),
+        );
+      },
+      child: Card(
+        margin: const EdgeInsets.only(bottom: 12),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            children: [
+              Container(
+                width: 100,
+                height: 100,
+                decoration: BoxDecoration(
+                  color: AppTheme.beige100,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: product.images.isNotEmpty
+                    ? Image.network(
+                        product.images.first,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return const Icon(
+                            Icons.image_not_supported,
+                            size: 40,
+                            color: AppTheme.char400,
+                          );
+                        },
+                      )
+                    : const Icon(
+                        Icons.chair,
+                        size: 40,
+                        color: AppTheme.primary400,
+                      ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (product.category != null || product.brand != null)
+                      Text(
+                        product.category?.name ?? product.brand?.name ?? '',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: AppTheme.char600,
+                            ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    const SizedBox(height: 4),
                     Text(
-                      product.category?.name ?? product.brand?.name ?? '',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppTheme.char600,
-                          ),
-                      maxLines: 1,
+                      product.name,
+                      style: Theme.of(context).textTheme.titleMedium,
+                      maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
-                  const SizedBox(height: 4),
-                  Text(
-                    product.name,
-                    style: Theme.of(context).textTheme.titleMedium,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.star,
-                        size: 14,
-                        color: Colors.amber,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        product.totalReviews > 0
-                            ? '${product.averageRating.toStringAsFixed(1)} (${product.totalReviews} đánh giá)'
-                            : 'Chưa có đánh giá',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: product.totalReviews > 0 ? AppTheme.char900 : AppTheme.char600,
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.star,
+                          size: 14,
+                          color: Colors.amber,
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Text(
-                        _formatCurrency(product.price),
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              color: AppTheme.primary500,
-                              fontWeight: FontWeight.bold,
-                            ),
-                      ),
-                      const Spacer(),
-                      IconButton(
-                        icon: Icon(
-                          isInWishlist ? Icons.favorite : Icons.favorite_border,
-                          color: isInWishlist ? Colors.red : AppTheme.char600,
-                          size: 20,
-                        ),
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
-                        onPressed: () => _toggleWishlist(product),
-                      ),
-                      const SizedBox(width: 8),
-                      ElevatedButton(
-                        onPressed: () => _addToCart(product),
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
+                        const SizedBox(width: 4),
+                        Text(
+                          product.totalReviews > 0
+                              ? '${product.averageRating.toStringAsFixed(1)} (${product.totalReviews} đánh giá)'
+                              : 'Chưa có đánh giá',
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: product.totalReviews > 0 ? AppTheme.char900 : AppTheme.char600,
                           ),
                         ),
-                        child: const Text('Thêm'),
-                      ),
-                    ],
-                  ),
-                ],
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Text(
+                          _formatCurrency(product.price),
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                color: AppTheme.primary500,
+                                fontWeight: FontWeight.bold,
+                              ),
+                        ),
+                        const Spacer(),
+                        IconButton(
+                          icon: Icon(
+                            isInWishlist ? Icons.favorite : Icons.favorite_border,
+                            color: isInWishlist ? Colors.red : AppTheme.char600,
+                            size: 20,
+                          ),
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                          onPressed: () => _toggleWishlist(product),
+                        ),
+                        const SizedBox(width: 8),
+                        ElevatedButton(
+                          onPressed: () => _addToCart(product),
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
+                          ),
+                          child: const Text('Thêm'),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

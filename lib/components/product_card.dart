@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import '../constants/app_theme.dart';
+import '../pages/product_detail_page.dart';
 
 /// Product card component with image, title, price, and add to cart button
 class ProductCard extends StatefulWidget {
+  final String? productId;
+  final String? productSlug;
   final String imageUrl;
   final String title;
   final String category;
@@ -15,6 +18,8 @@ class ProductCard extends StatefulWidget {
 
   const ProductCard({
     super.key,
+    this.productId,
+    this.productSlug,
     required this.imageUrl,
     required this.title,
     required this.category,
@@ -71,7 +76,18 @@ class _ProductCardState extends State<ProductCard>
       onTapDown: _onTapDown,
       onTapUp: _onTapUp,
       onTapCancel: _onTapCancel,
-      onTap: widget.onTap,
+      onTap: widget.onTap ?? (widget.productSlug != null
+          ? () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ProductDetailPage(
+                    productSlug: widget.productSlug!,
+                  ),
+                ),
+              );
+            }
+          : null),
       child: ScaleTransition(
         scale: _scaleAnimation,
         child: Container(
