@@ -11,6 +11,7 @@ import '../service/api_client.dart';
 import '../providers/cart_provider.dart';
 import '../providers/wishlist_provider.dart';
 import '../providers/auth_provider.dart';
+import '../components/lazy_image.dart';
 import 'login_page.dart';
 import 'product_detail_page.dart';
 
@@ -45,6 +46,8 @@ class _ProductsPageState extends State<ProductsPage> {
   Map<String, dynamic>? _pagination;
 
   bool _isLoading = false;
+  bool _isLoadingMore = false;
+  bool _hasMore = true;
   String? _errorMessage;
 
   final TextEditingController _searchController = TextEditingController();
@@ -56,6 +59,7 @@ class _ProductsPageState extends State<ProductsPage> {
 
   int _currentPage = 1;
   final int _limit = 12;
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
@@ -76,6 +80,7 @@ class _ProductsPageState extends State<ProductsPage> {
       _maxPriceController.text = widget.maxPrice!.toString();
     }
 
+    _scrollController.addListener(_onScroll);
     _loadInitialData();
   }
 
@@ -84,7 +89,18 @@ class _ProductsPageState extends State<ProductsPage> {
     _searchController.dispose();
     _minPriceController.dispose();
     _maxPriceController.dispose();
+    _scrollController.dispose();
     super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+            _scrollController.position.maxScrollExtent - 200 &&
+        !_isLoadingMore &&
+        _hasMore &&
+        !_isLoading) {
+      _loadMoreProducts();
+    }
   }
 
   Future<void> _loadInitialData() async {
@@ -125,6 +141,7 @@ class _ProductsPageState extends State<ProductsPage> {
     setState(() {
       _isLoading = true;
       _errorMessage = null;
+      _hasMore = true;
     });
 
     try {
@@ -144,9 +161,11 @@ class _ProductsPageState extends State<ProductsPage> {
       );
 
       if (result['success'] == true && mounted) {
+        final newProducts = result['products'] ?? [];
         setState(() {
-          _products = result['products'] ?? [];
+          _products = newProducts;
           _pagination = result['pagination'];
+          _hasMore = _currentPage < (_pagination?['totalPages'] ?? 1);
           _isLoading = false;
         });
       } else {
@@ -161,6 +180,47 @@ class _ProductsPageState extends State<ProductsPage> {
           _errorMessage = 'Đã có lỗi xảy ra: $e';
           _isLoading = false;
         });
+      }
+    }
+  }
+
+  Future<void> _loadMoreProducts() async {
+    if (_isLoadingMore || !_hasMore) return;
+
+    setState(() => _isLoadingMore = true);
+
+    try {
+      final nextPage = _currentPage + 1;
+      final result = await _productService.getAllProducts(
+        category: _selectedCategoryId,
+        brand: _selectedBrandId,
+        minPrice: _minPriceController.text.isNotEmpty
+            ? double.tryParse(_minPriceController.text)
+            : null,
+        maxPrice: _maxPriceController.text.isNotEmpty
+            ? double.tryParse(_maxPriceController.text)
+            : null,
+        search: _searchController.text.isNotEmpty ? _searchController.text : null,
+        sort: _sortBy,
+        page: nextPage,
+        limit: _limit,
+      );
+
+      if (result['success'] == true && mounted) {
+        final newProducts = result['products'] ?? [];
+        setState(() {
+          _products.addAll(newProducts);
+          _currentPage = nextPage;
+          _pagination = result['pagination'];
+          _hasMore = _currentPage < (_pagination?['totalPages'] ?? 1);
+          _isLoadingMore = false;
+        });
+      } else {
+        setState(() => _isLoadingMore = false);
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoadingMore = false);
       }
     }
   }
@@ -514,21 +574,23 @@ class _ProductsPageState extends State<ProductsPage> {
       return _buildEmptyState();
     }
 
-    return Column(
-      children: [
-        Expanded(
-          child: _buildListView(),
-        ),
-        if (_pagination != null) _buildPagination(),
-      ],
-    );
+    return _buildListView();
   }
 
   Widget _buildListView() {
     return ListView.builder(
+      controller: _scrollController,
       padding: const EdgeInsets.all(16),
-      itemCount: _products.length,
+      itemCount: _products.length + (_isLoadingMore ? 1 : 0),
       itemBuilder: (context, index) {
+        if (index == _products.length) {
+          return const Padding(
+            padding: EdgeInsets.all(16.0),
+            child: Center(
+              child: CircularProgressIndicator(),
+            ),
+          );
+        }
         return _buildProductListItem(_products[index]);
       },
     );
@@ -570,16 +632,17 @@ class _ProductsPageState extends State<ProductsPage> {
                       ),
                       clipBehavior: Clip.antiAlias,
                       child: product.images.isNotEmpty
-                          ? Image.network(
-                              product.images.first,
+                          ? LazyImage(
+                              imageUrl: product.images.first,
+                              width: 100,
+                              height: 100,
                               fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) {
-                                return const Icon(
-                                  Icons.image_not_supported,
-                                  size: 40,
-                                  color: AppTheme.char400,
-                                );
-                              },
+                              borderRadius: BorderRadius.circular(8),
+                              errorWidget: const Icon(
+                                Icons.image_not_supported,
+                                size: 40,
+                                color: AppTheme.char400,
+                              ),
                             )
                           : const Icon(
                               Icons.chair,

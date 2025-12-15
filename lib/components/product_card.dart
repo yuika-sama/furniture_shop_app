@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../constants/app_theme.dart';
 import '../pages/product_detail_page.dart';
+import 'lazy_image.dart';
 
 /// Product card component with image, title, price, and add to cart button
 class ProductCard extends StatefulWidget {
@@ -123,65 +124,26 @@ class _ProductCardState extends State<ProductCard>
                           topRight: Radius.circular(16),
                         ),
                       ),
-                      child: ClipRRect(
+                      child: LazyImage(
+                        imageUrl: widget.imageUrl,
+                        width: double.infinity,
+                        height: 180,
+                        fit: BoxFit.cover,
                         borderRadius: const BorderRadius.only(
                           topLeft: Radius.circular(16),
                           topRight: Radius.circular(16),
                         ),
-                        child: widget.imageUrl.startsWith('http')
-                            ? Image.network(
-                                widget.imageUrl,
-                                fit: BoxFit.cover,
-                                width: double.infinity,
-                                height: 180,
-                                loadingBuilder: (context, child, loadingProgress) {
-                                  if (loadingProgress == null) return child;
-                                  return Container(
-                                    color: AppTheme.beige100,
-                                    height: 180,
-                                    child: Center(
-                                      child: CircularProgressIndicator(
-                                        value: loadingProgress.expectedTotalBytes != null
-                                            ? loadingProgress.cumulativeBytesLoaded /
-                                                loadingProgress.expectedTotalBytes!
-                                            : null,
-                                      ),
-                                    ),
-                                  );
-                                },
-                                errorBuilder: (context, error, stackTrace) {
-                                  return Container(
-                                    color: AppTheme.beige100,
-                                    height: 180,
-                                    child: const Center(
-                                      child: Icon(
-                                        Icons.chair_outlined,
-                                        size: 64,
-                                        color: AppTheme.char300,
-                                      ),
-                                    ),
-                                  );
-                                },
-                              )
-                            : Image.asset(
-                                widget.imageUrl,
-                                fit: BoxFit.cover,
-                                width: double.infinity,
-                                height: 180,
-                                errorBuilder: (context, error, stackTrace) {
-                                  return Container(
-                                    color: AppTheme.beige100,
-                                    height: 180,
-                                    child: const Center(
-                                      child: Icon(
-                                        Icons.chair_outlined,
-                                        size: 64,
-                                        color: AppTheme.char300,
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
+                        errorWidget: Container(
+                          color: AppTheme.beige100,
+                          height: 180,
+                          child: const Center(
+                            child: Icon(
+                              Icons.chair_outlined,
+                              size: 64,
+                              color: AppTheme.char300,
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                     // 3D chip
