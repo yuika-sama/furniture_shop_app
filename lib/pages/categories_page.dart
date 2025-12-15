@@ -4,6 +4,9 @@ import '../constants/app_theme.dart';
 import '../providers/category_provider.dart';
 import '../components/app_bar_actions.dart';
 import '../components/room_category_components.dart';
+import '../service/brand_service.dart';
+import '../service/api_client.dart';
+import '../models/brand_model.dart';
 import 'products_page.dart';
 
 class CategoriesPage extends StatefulWidget {
@@ -17,11 +20,15 @@ class _CategoriesPageState extends State<CategoriesPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   String _selectedFilter = 'Tất cả';
+  late final BrandService _brandService;
+  List<BrandModel> _brands = [];
+  bool _isLoadingBrands = false;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _brandService = BrandService(ApiClient());
+    _tabController = TabController(length: 3, vsync: this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadData();
     });
@@ -32,7 +39,25 @@ class _CategoriesPageState extends State<CategoriesPage>
     await Future.wait([
       categoryProvider.loadCategoryTree(),
       categoryProvider.loadCategories(),
+      _loadBrands(),
     ]);
+  }
+
+  Future<void> _loadBrands() async {
+    setState(() => _isLoadingBrands = true);
+    try {
+      final result = await _brandService.getAllBrands();
+      if (result['success'] == true && mounted) {
+        setState(() {
+          _brands = result['brands'] ?? [];
+          _isLoadingBrands = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoadingBrands = false);
+      }
+    }
   }
 
   @override
@@ -70,6 +95,7 @@ class _CategoriesPageState extends State<CategoriesPage>
                 tabs: const [
                   Tab(text: 'Theo phòng'),
                   Tab(text: 'Theo loại'),
+                  Tab(text:' Theo thương hiệu')
                 ],
               ),
             ),
@@ -80,6 +106,7 @@ class _CategoriesPageState extends State<CategoriesPage>
           children: [
             _buildRoomsList(),
             _buildCategoriesList(),
+            _buildBrandsList(),
           ],
         ),
       ),
@@ -360,7 +387,131 @@ class _CategoriesPageState extends State<CategoriesPage>
     );
   }
 
+  Widget _buildBrandsList() {
+    if (_isLoadingBrands) {
+      return const Center(child: CircularProgressIndicator());
+    }
 
+    if (_brands.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.business_outlined,
+              size: 80,
+              color: AppTheme.char300,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Chưa có thương hiệu nào',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: AppTheme.char500,
+                  ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: _loadBrands,
+      child: GridView.builder(
+        padding: const EdgeInsets.all(16),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          childAspectRatio: 0.85,
+          crossAxisSpacing: 8,
+          mainAxisSpacing: 8,
+        ),
+        itemCount: _brands.length,
+        itemBuilder: (context, index) {
+          final brand = _brands[index];
+          return Card(
+            clipBehavior: Clip.antiAlias,
+            child: InkWell(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ProductsPage(
+                      brandId: brand.id,
+                    ),
+                  ),
+                );
+              },
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(
+                    flex: 3,
+                    child: brand.image != null && brand.image!.isNotEmpty
+                        ? Image.network(
+                            brand.image!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Container(
+                                color: AppTheme.beige100,
+                                child: Icon(
+                                  Icons.business,
+                                  size: 64,
+                                  color: AppTheme.primary500,
+                                ),
+                              );
+                            },
+                          )
+                        : Container(
+                            color: AppTheme.beige100,
+                            child: Icon(
+                              Icons.business,
+                              size: 64,
+                              color: AppTheme.primary500,
+                            ),
+                          ),
+                  ),
+                  Expanded(
+                    flex: 2,
+                    child: Padding(
+                      padding: const EdgeInsets.all(8),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            brand.name,
+                            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          if (brand.description != null && brand.description!.isNotEmpty) ...[
+                            const SizedBox(height: 4),
+                            Flexible(
+                              child: Text(
+                                brand.description!,
+                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      color: AppTheme.char600,
+                                      fontSize: 11,
+                                    ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
 
   void _showFilterBottomSheet() {
     showModalBottomSheet(

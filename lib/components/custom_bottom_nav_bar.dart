@@ -39,7 +39,7 @@ class CustomBottomNavBar extends StatelessWidget {
         BottomNavigationBarItem(
           icon: Icon(Icons.grid_view_outlined),
           activeIcon: Icon(Icons.grid_view),
-          label: 'Danh mục',
+          label: 'Phân loại',
         ),
         BottomNavigationBarItem(
           icon: Icon(Icons.local_offer_outlined),
