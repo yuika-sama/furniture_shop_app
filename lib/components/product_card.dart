@@ -16,6 +16,7 @@ class ProductCard extends StatefulWidget {
   final VoidCallback? onAddToCart;
   final VoidCallback? onToggleFavorite;
   final bool isFavorite;
+  final int? stock;
 
   const ProductCard({
     super.key,
@@ -31,6 +32,7 @@ class ProductCard extends StatefulWidget {
     this.onAddToCart,
     this.onToggleFavorite,
     this.isFavorite = false,
+    this.stock = 0,
   });
 
   @override
@@ -313,10 +315,9 @@ class _ProductCardState extends State<ProductCard>
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    const SizedBox(height: 4),
                     // Product Title - Fixed height for 2 lines
                     SizedBox(
-                      height: 38,
+                      height: 32,
                       child: Text(
                         widget.title,
                         style: const TextStyle(
@@ -329,8 +330,17 @@ class _ProductCardState extends State<ProductCard>
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    const Spacer(),
                     // Price - Fixed height
+                    Text(
+                      'Còn ${widget.stock} mặt hàng',
+                      style: const TextStyle(
+                        color: AppTheme.char900,
+                        fontWeight: FontWeight.normal,
+                        fontSize: 10,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                     Text(
                       '${_formatPrice(widget.price)} ₫',
                       style: const TextStyle(

@@ -129,16 +129,16 @@ class _SearchPageState extends State<SearchPage> {
         title: TextField(
           controller: _searchController,
           autofocus: true,
-          style: const TextStyle(color: Colors.white),
+          style: const TextStyle(color: AppTheme.char900),
           textInputAction: TextInputAction.search, // Hiển thị nút Search trên bàn phím
           decoration: InputDecoration(
             hintText: 'Tìm kiếm sản phẩm...',
-            hintStyle: TextStyle(color: Colors.white.withOpacity(0.7)),
+            hintStyle: TextStyle(color: AppTheme.char900.withOpacity(0.7)),
             border: InputBorder.none,
             // Nút xóa chỉ hiện khi có text
             suffixIcon: _searchController.text.isNotEmpty
                 ? IconButton(
-              icon: const Icon(Icons.clear, color: Colors.white),
+              icon: const Icon(Icons.clear, color: AppTheme.char900),
               onPressed: () {
                 _searchController.clear();
                 setState(() {}); // Rebuild để ẩn nút clear
