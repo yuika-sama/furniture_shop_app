@@ -29,6 +29,7 @@ class _Product3DViewerPageState extends State<Product3DViewerPage> {
   String? _remoteModelUrl; // URL gốc từ server
   double _downloadProgress = 0.0;
   String _loadingStatus = 'Đang kiểm tra cache...';
+  int _resetCounter = 0; // Counter để force rebuild ModelViewer khi reset
 
   @override
   void initState() {
@@ -321,7 +322,7 @@ class _Product3DViewerPageState extends State<Product3DViewerPage> {
     debugPrint('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     
     return ModelViewer(
-      key: ValueKey(_localModelPath),
+      key: ValueKey('${_localModelPath}_$_resetCounter'),
       src: localFileUrl,
       alt: widget.product.name,
       poster: posterUrl,
@@ -344,7 +345,7 @@ class _Product3DViewerPageState extends State<Product3DViewerPage> {
       fieldOfView: '30deg',
       
       // Environment & Lighting
-      backgroundColor: Colors.transparent,
+      backgroundColor: Colors.white,
       shadowIntensity: 1.0,
       shadowSoftness: 0.8,
       exposure: 1.0,
@@ -514,13 +515,16 @@ class _Product3DViewerPageState extends State<Product3DViewerPage> {
                 Expanded(
                   child: OutlinedButton.icon(
                     onPressed: () {
-                      // Force rebuild ModelViewer to reset camera
+                      // Force rebuild ModelViewer để reset camera về vị trí ban đầu
                       setState(() {
-                        _hasError = false;
+                        _resetCounter++;
                       });
+                      
+                      debugPrint('🔄 Reset camera view (counter: $_resetCounter)');
+                      
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content: Text('Đã reset góc nhìn'),
+                          content: Text('Đã reset góc nhìn về mặc định'),
                           duration: Duration(seconds: 1),
                           behavior: SnackBarBehavior.floating,
                         ),
