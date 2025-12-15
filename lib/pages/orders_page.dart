@@ -40,6 +40,7 @@ class _OrdersPageState extends State<OrdersPage> with SingleTickerProviderStateM
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        centerTitle: false,
         title: const Text('Đơn hàng của tôi'),
         bottom: TabBar(
           controller: _tabController,

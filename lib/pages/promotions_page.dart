@@ -46,6 +46,7 @@ class _PromotionsPageState extends State<PromotionsPage>
               title: const Text('Khuyến mãi & Hướng dẫn'),
               floating: true,
               snap: true,
+              centerTitle: false,
               actions: const [
                 CommonAppBarActions(showWishlist: false),
               ],

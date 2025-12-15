@@ -83,6 +83,7 @@ class _CartPageState extends State<CartPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        centerTitle: false,
         title: const Text('Giỏ hàng'),
         actions: [
           Consumer<CartProvider>(

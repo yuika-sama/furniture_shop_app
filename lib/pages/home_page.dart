@@ -58,8 +58,9 @@ class _HomePageState extends State<HomePage> {
       body: CustomScrollView(
         slivers: [
           // App Bar
-          SliverAppBar.medium(
+          SliverAppBar(
             pinned: true,
+            centerTitle: false,
             title: const Text(
               'Homi Furniture',
               style: TextStyle(

@@ -51,6 +51,7 @@ class _CategoriesPageState extends State<CategoriesPage>
               title: const Text('Danh mục'),
               floating: true,
               snap: true,
+              centerTitle: false,
               actions: [
                 CommonAppBarActions(
                   showWishlist: false,

@@ -125,6 +125,7 @@ class _SearchPageState extends State<SearchPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        centerTitle: false,
         // Giả sử AppTheme của bạn có màu nền, nếu không hãy thêm backgroundColor
         title: TextField(
           controller: _searchController,

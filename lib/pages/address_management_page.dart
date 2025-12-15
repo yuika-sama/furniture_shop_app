@@ -51,6 +51,7 @@ class _AddressManagementPageState extends State<AddressManagementPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        centerTitle: false,
         title: const Text('Địa chỉ giao hàng'),
         actions: [
           IconButton(

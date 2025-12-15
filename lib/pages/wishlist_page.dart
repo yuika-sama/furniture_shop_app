@@ -30,6 +30,7 @@ class _WishlistPageState extends State<WishlistPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        centerTitle: false,
         title: const Text('Sản phẩm yêu thích'),
         actions: [
           Consumer<WishlistProvider>(
