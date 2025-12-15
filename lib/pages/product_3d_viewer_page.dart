@@ -64,6 +64,17 @@ class _Product3DViewerPageState extends State<Product3DViewerPage> {
         url = url.replaceFirst('http://', 'https://');
       }
 
+      // 4. Xử lý xoá phần thừa sau đuôi .glb
+      // Tìm vị trí bắt đầu của chuỗi ".glb"
+      int extensionIndex = url.indexOf('.glb');
+
+      // Nếu tìm thấy ".glb" trong URL
+            if (extensionIndex != -1) {
+              // Cắt chuỗi từ đầu cho đến hết chữ "b" của .glb
+              // +4 là độ dài của chuỗi ".glb"
+              url = url.substring(0, extensionIndex + 4);
+            }
+
       _remoteModelUrl = url;
 
       debugPrint('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');

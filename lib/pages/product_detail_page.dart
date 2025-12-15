@@ -349,7 +349,7 @@ class _ProductDetailPageState extends State<ProductDetailPage>
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => ProductARViewerPage(
+                        builder: (context) => ProductNativeARPage(
                           product: _product!,
                         ),
                       ),

@@ -1,508 +1,333 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:permission_handler/permission_handler.dart';
+import 'package:model_viewer_plus/model_viewer_plus.dart';
+
 import '../constants/app_theme.dart';
 import '../models/product_model.dart';
+import '../service/api_client.dart';
+import '../service/model_cache_service.dart';
 
-class ProductARViewerPage extends StatefulWidget {
+class ProductNativeARPage extends StatefulWidget {
   final ProductModel product;
 
-  const ProductARViewerPage({
+  const ProductNativeARPage({
     super.key,
     required this.product,
   });
 
   @override
-  State<ProductARViewerPage> createState() => _ProductARViewerPageState();
+  State<ProductNativeARPage> createState() => _ProductNativeARPageState();
 }
 
-class _ProductARViewerPageState extends State<ProductARViewerPage> {
-  bool _isLoading = true;
-  bool _hasPermission = false;
-  bool _isPlaced = false;
+class _ProductNativeARPageState extends State<ProductNativeARPage> {
+  late final ApiClient _apiClient;
+  late final ModelCacheService _cacheService;
+
+  bool _isDownloading = true;
+  bool _hasError = false;
   String? _errorMessage;
+  String? _localModelPath; // Đường dẫn file trên máy
+  String? _remoteModelUrl; // Đường dẫn gốc
+  double _downloadProgress = 0.0;
+  String _loadingStatus = 'Đang kiểm tra dữ liệu...';
 
   @override
   void initState() {
     super.initState();
-    _initializeAR();
+    _apiClient = ApiClient();
+    _cacheService = ModelCacheService();
+    _initializeModel();
   }
 
-  Future<void> _initializeAR() async {
+  // --- LOGIC TẢI VÀ CACHE (Tương tự Product3DViewerPage) ---
+  Future<void> _initializeModel() async {
     try {
-      // Request camera permission
-      final status = await Permission.camera.request();
-      
-      if (status.isGranted) {
+      // 1. Validate URL
+      if (widget.product.model3DUrl == null || widget.product.model3DUrl!.isEmpty) {
+        throw Exception('Sản phẩm chưa có dữ liệu 3D');
+      }
+
+      String url = widget.product.model3DUrl!;
+
+      // 2. Xử lý URL (thêm domain nếu thiếu, chuyển https)
+      if (!url.startsWith('http')) {
+        url = _apiClient.getImageUrl(url);
+      }
+      url = Uri.encodeFull(url);
+      if (url.startsWith('http://')) {
+        url = url.replaceFirst('http://', 'https://');
+      }
+
+      // 3. Clean URL (Xóa phần thừa sau .glb nếu có)
+      int extensionIndex = url.indexOf('.glb');
+      if (extensionIndex != -1) {
+        url = url.substring(0, extensionIndex + 4);
+      }
+
+      _remoteModelUrl = url;
+
+      debugPrint('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      debugPrint('🎯 AR Setup: Downloading Model');
+      debugPrint('URL: $_remoteModelUrl');
+
+      // 4. Download và Cache
+      setState(() {
+        _loadingStatus = 'Đang tải dữ liệu 3D...';
+        _downloadProgress = 0.0;
+      });
+
+      final localPath = await _cacheService.downloadAndCacheModel(
+        productId: widget.product.id,
+        modelUrl: url,
+        onProgress: (progress) {
+          if (mounted) {
+            setState(() {
+              _downloadProgress = progress;
+              _loadingStatus = 'Đang tải ${(progress * 100).toStringAsFixed(0)}%';
+            });
+          }
+        },
+      );
+
+      if (localPath == null) throw Exception('Lỗi kết nối mạng');
+
+      // 5. Kiểm tra file tồn tại
+      if (!await File(localPath).exists()) {
+        throw Exception('File không tồn tại sau khi tải');
+      }
+
+      // 6. Hoàn tất
+      if (mounted) {
         setState(() {
-          _hasPermission = true;
-        });
-        
-        // TODO: Initialize AR session
-        await Future.delayed(const Duration(seconds: 1));
-        
-        if (mounted) {
-          setState(() {
-            _isLoading = false;
-          });
-        }
-      } else if (status.isPermanentlyDenied) {
-        setState(() {
-          _errorMessage = 'Vui lòng cấp quyền camera trong Cài đặt';
-          _isLoading = false;
-        });
-      } else {
-        setState(() {
-          _errorMessage = 'Cần quyền truy cập camera để sử dụng AR';
-          _isLoading = false;
+          _localModelPath = localPath;
+          _isDownloading = false;
+          _loadingStatus = 'Sẵn sàng!';
         });
       }
+      debugPrint('✅ AR Ready. Local Path: $localPath');
+
     } catch (e) {
-      setState(() {
-        _errorMessage = 'Lỗi khởi tạo AR: $e';
-        _isLoading = false;
-      });
+      debugPrint('❌ AR Init Error: $e');
+      if (mounted) {
+        setState(() {
+          _hasError = true;
+          _errorMessage = e.toString();
+          _isDownloading = false;
+        });
+      }
     }
+  }
+
+  Future<void> _retryDownload() async {
+    if (widget.product.model3DUrl == null) return;
+    // Xóa cache cũ nếu lỗi
+    await _cacheService.deleteCachedModel(widget.product.id);
+    setState(() {
+      _hasError = false;
+      _errorMessage = null;
+      _isDownloading = true;
+    });
+    _initializeModel();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
+      appBar: AppBar(
+        title: Text(widget.product.name),
+        backgroundColor: Colors.transparent,
+        foregroundColor: Colors.white,
+        elevation: 0,
+      ),
+      extendBodyBehindAppBar: true,
       body: Stack(
         children: [
-          // AR View Area
-          if (_isLoading)
-            _buildLoadingView()
-          else if (_errorMessage != null)
+          // 1. Layer hiển thị (Loading / Error / AR Viewer)
+          if (_hasError)
             _buildErrorView()
-          else if (_hasPermission)
-            _buildARViewPlaceholder()
-          else
-            _buildPermissionDeniedView(),
-          
-          // Top bar
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            child: _buildTopBar(),
-          ),
-          
-          // Controls overlay
-          if (!_isLoading && _hasPermission && _errorMessage == null)
+          else if (_isDownloading)
+            _buildDownloadingView()
+          else if (_localModelPath != null)
+              _buildARViewer(),
+
+          // 2. Layer hướng dẫn (chỉ hiện khi đã tải xong)
+          if (!_isDownloading && !_hasError)
             Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: _buildControls(),
+              bottom: 40,
+              left: 20,
+              right: 20,
+              child: _buildGuideOverlay(),
             ),
         ],
       ),
     );
   }
 
-  Widget _buildLoadingView() {
-    return const Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          CircularProgressIndicator(color: Colors.white),
-          SizedBox(height: 16),
-          Text(
-            'Đang khởi tạo AR...',
-            style: TextStyle(color: Colors.white),
+  // Màn hình Loading
+  Widget _buildDownloadingView() {
+    return Container(
+      color: Colors.black,
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Hiển thị ảnh sản phẩm mờ mờ làm nền loading
+              if (widget.product.images.isNotEmpty)
+                Container(
+                  height: 150,
+                  width: 150,
+                  margin: const EdgeInsets.only(bottom: 30),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    image: DecorationImage(
+                      image: NetworkImage(_apiClient.getImageUrl(widget.product.images.first)),
+                      fit: BoxFit.cover,
+                      colorFilter: ColorFilter.mode(Colors.black.withOpacity(0.5), BlendMode.darken),
+                    ),
+                  ),
+                ),
+
+              const CircularProgressIndicator(color: Colors.white),
+              const SizedBox(height: 20),
+              Text(
+                _loadingStatus,
+                style: const TextStyle(color: Colors.white, fontSize: 16),
+              ),
+              const SizedBox(height: 10),
+              LinearProgressIndicator(
+                value: _downloadProgress,
+                backgroundColor: Colors.grey[800],
+                valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primary500),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
 
+  // Màn hình Lỗi
   Widget _buildErrorView() {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(32),
+        padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.error_outline,
-              size: 80,
-              color: AppTheme.error,
-            ),
-            const SizedBox(height: 24),
+            const Icon(Icons.error_outline, size: 60, color: Colors.redAccent),
+            const SizedBox(height: 16),
             Text(
-              _errorMessage!,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-              ),
+              _errorMessage ?? 'Đã xảy ra lỗi',
               textAlign: TextAlign.center,
+              style: const TextStyle(color: Colors.white),
             ),
             const SizedBox(height: 24),
             ElevatedButton.icon(
-              onPressed: () => Navigator.pop(context),
-              icon: const Icon(Icons.arrow_back),
-              label: const Text('Quay lại'),
+              onPressed: _retryDownload,
+              icon: const Icon(Icons.refresh),
+              label: const Text('Thử lại'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.primary500,
                 foregroundColor: Colors.white,
               ),
-            ),
+            )
           ],
         ),
       ),
     );
   }
 
-  Widget _buildPermissionDeniedView() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.camera_alt_outlined,
-              size: 80,
-              color: AppTheme.char400,
-            ),
-            const SizedBox(height: 24),
-            const Text(
-              'Cần quyền truy cập camera',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 12),
-            const Text(
-              'Để sử dụng tính năng AR, bạn cần cấp quyền truy cập camera',
-              style: TextStyle(
-                color: Colors.white70,
-                fontSize: 14,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 24),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                OutlinedButton(
-                  onPressed: () => Navigator.pop(context),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.white,
-                    side: const BorderSide(color: Colors.white),
-                  ),
-                  child: const Text('Hủy'),
-                ),
-                const SizedBox(width: 12),
-                ElevatedButton(
-                  onPressed: () async {
-                    await openAppSettings();
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primary500,
-                    foregroundColor: Colors.white,
-                  ),
-                  child: const Text('Mở Cài đặt'),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
+  // --- AR VIEWER CHÍNH (Sử dụng File Local) ---
+  Widget _buildARViewer() {
+    // Tạo đường dẫn file local
+    final localFileUrl = 'file://$_localModelPath';
+
+    // Poster hiển thị trước khi model load xong
+    final posterUrl = widget.product.images.isNotEmpty
+        ? _apiClient.getImageUrl(widget.product.images.first)
+        : '';
+
+    return ModelViewer(
+      // Key quan trọng để widget rebuild khi path thay đổi
+      key: ValueKey(localFileUrl),
+
+      // Load từ file trên máy (Cache)
+      src: localFileUrl,
+      alt: widget.product.name,
+      poster: posterUrl,
+
+      // Cấu hình AR - QUAN TRỌNG ĐỂ ĐẶT ĐỒ NỘI THẤT
+      ar: true,
+      arModes: const ['scene-viewer', 'webxr', 'quick-look'], // Ưu tiên SceneViewer (Native Android)
+      arPlacement: ArPlacement.floor, // Bắt buộc: Đặt xuống sàn
+      arScale: ArScale.auto, // Tỉ lệ thực 1:1
+
+      // Camera & Điều khiển
+      cameraControls: true,
+      autoRotate: true,
+
+      // iOS Setup (Dùng file local cho QuickLook)
+      iosSrc: localFileUrl,
+
+      // UI Tùy chỉnh
+      backgroundColor: Colors.white,
+      loading: Loading.eager,
+
+      // CSS để Custom nút bấm AR
+      relatedCss: '''
+        model-viewer > button[slot="ar-button"] {
+          background-color: #FF9800;
+          border-radius: 8px;
+          border: none;
+          color: white;
+          position: absolute;
+          top: 32px;
+          right: 16px;
+          padding: 12px 24px;
+          font-family: sans-serif;
+          font-size: 16px;
+          font-weight: bold;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.25);
+        }
+      ''',
     );
   }
 
-  Widget _buildARViewPlaceholder() {
-    return Container(
-      width: double.infinity,
-      height: double.infinity,
-      color: Colors.grey[900],
-      child: Stack(
-        children: [
-          // Camera preview placeholder
-          Center(
-            child: Icon(
-              Icons.camera_alt,
-              size: 120,
-              color: Colors.white24,
-            ),
-          ),
-          
-          // Crosshair for placing object
-          if (!_isPlaced)
-            Center(
-              child: Icon(
-                Icons.add,
-                size: 48,
-                color: AppTheme.primary500,
-              ),
-            ),
-          
-          // Info overlay
-          Positioned(
-            top: 100,
-            left: 0,
-            right: 0,
-            child: Container(
-              margin: const EdgeInsets.symmetric(horizontal: 32),
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.black54,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: AppTheme.primary500),
-              ),
-              child: Column(
-                children: [
-                  Text(
-                    'Tính năng AR đang được phát triển',
-                    style: TextStyle(
-                      color: AppTheme.primary300,
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    _isPlaced
-                        ? 'Object đã được đặt!'
-                        : 'Di chuyển điện thoại để quét bề mặt',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 12,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    widget.product.name,
-                    style: const TextStyle(
-                      color: Colors.white70,
-                      fontSize: 11,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTopBar() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            Colors.black.withOpacity(0.6),
-            Colors.transparent,
-          ],
-        ),
-      ),
-      child: SafeArea(
-        bottom: false,
-        child: Row(
-          children: [
-            IconButton(
-              icon: const Icon(Icons.close, color: Colors.white),
-              onPressed: () => Navigator.pop(context),
-            ),
-            Expanded(
-              child: Text(
-                'AR View - ${widget.product.name}',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            IconButton(
-              icon: const Icon(Icons.info_outline, color: Colors.white),
-              onPressed: _showHelp,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildControls() {
+  // Widget hiển thị hướng dẫn
+  Widget _buildGuideOverlay() {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.bottomCenter,
-          end: Alignment.topCenter,
-          colors: [
-            Colors.black.withOpacity(0.8),
-            Colors.transparent,
-          ],
-        ),
+        color: Colors.black.withOpacity(0.7),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white24),
       ),
-      child: SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Main action button
-            if (!_isPlaced)
-              SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    setState(() {
-                      _isPlaced = true;
-                    });
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Đã đặt object (Placeholder)'),
-                        behavior: SnackBarBehavior.floating,
-                        duration: Duration(seconds: 1),
-                      ),
-                    );
-                  },
-                  icon: const Icon(Icons.touch_app),
-                  label: const Text(
-                    'Nhấn để đặt',
-                    style: TextStyle(fontSize: 16),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primary500,
-                    foregroundColor: Colors.white,
-                  ),
-                ),
-              )
-            else
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () {
-                        setState(() {
-                          _isPlaced = false;
-                        });
-                      },
-                      icon: const Icon(Icons.refresh),
-                      label: const Text('Đặt lại'),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.white,
-                        side: const BorderSide(color: Colors.white),
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Tính năng chụp ảnh đang phát triển'),
-                            behavior: SnackBarBehavior.floating,
-                          ),
-                        );
-                      },
-                      icon: const Icon(Icons.camera_alt),
-                      label: const Text('Chụp'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primary500,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showHelp() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Hướng dẫn sử dụng AR',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 16),
-            _buildHelpItem(
-              '1. Quét bề mặt',
-              'Di chuyển điện thoại chậm rãi để quét sàn hoặc bề mặt phẳng',
-            ),
-            _buildHelpItem(
-              '2. Đặt object',
-              'Nhấn nút "Nhấn để đặt" khi tìm được vị trí phù hợp',
-            ),
-            _buildHelpItem(
-              '3. Điều chỉnh',
-              'Vuốt để xoay, pinch để phóng to/thu nhỏ',
-            ),
-            _buildHelpItem(
-              '4. Chụp ảnh',
-              'Nhấn nút camera để lưu lại hình ảnh',
-            ),
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Đã hiểu'),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHelpItem(String title, String description) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-              color: AppTheme.primary700,
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.view_in_ar, color: AppTheme.primary500),
+              const SizedBox(width: 10),
+              const Text(
+                'Chế độ AR',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 4),
-          Text(
-            description,
-            style: const TextStyle(
-              fontSize: 13,
-              color: Colors.black87,
-            ),
+          const SizedBox(height: 8),
+          const Text(
+            'Bấm vào nút ở góc dưới bên phải model để mở Camera và đặt vật phẩm vào không gian thực.',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.white70, fontSize: 13),
           ),
         ],
       ),
