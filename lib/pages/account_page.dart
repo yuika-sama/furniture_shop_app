@@ -11,6 +11,7 @@ import 'login_page.dart';
 import 'register_page.dart';
 import 'cart_page.dart';
 import 'address_management_page.dart';
+import 'orders_page.dart';
 
 class AccountPage extends StatefulWidget {
   const AccountPage({super.key});
@@ -75,12 +76,12 @@ class _AccountPageState extends State<AccountPage> {
                       'Tài khoản',
                       [
                         _MenuItem(
-                          icon: Icons.shopping_bag_outlined,
+                          icon: Icons.receipt_long,
                           title: 'Đơn hàng của tôi',
                           onTap: () {
                             Navigator.push(
                               context,
-                              MaterialPageRoute(builder: (context) => const CartPage()),
+                              MaterialPageRoute(builder: (context) => const OrdersPage()),
                             );
                           },
                         ),
