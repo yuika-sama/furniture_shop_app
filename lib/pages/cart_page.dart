@@ -5,6 +5,9 @@ import '../providers/cart_provider.dart';
 import '../providers/auth_provider.dart';
 import '../pages/login_page.dart';
 import 'product_detail_page.dart';
+import 'checkout_payment_page.dart';
+import '../service/address_service.dart';
+import '../service/api_client.dart';
 
 class CartPage extends StatefulWidget {
   const CartPage({super.key});
@@ -16,10 +19,19 @@ class CartPage extends StatefulWidget {
 class _CartPageState extends State<CartPage> {
   final _discountController = TextEditingController();
   bool _isApplyingDiscount = false;
+  
+  // Checkout state
+  late final AddressService _addressService;
+  List<dynamic> _addresses = [];
+  dynamic _selectedAddress;
+  String _paymentMethod = 'COD'; // 'COD' or 'QR'
+  final TextEditingController _noteController = TextEditingController();
+  bool _isLoadingAddresses = false;
 
   @override
   void initState() {
     super.initState();
+    _addressService = AddressService(ApiClient());
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkAuthAndLoadCart();
     });
@@ -28,6 +40,7 @@ class _CartPageState extends State<CartPage> {
   @override
   void dispose() {
     _discountController.dispose();
+    _noteController.dispose();
     super.dispose();
   }
 
@@ -629,83 +642,83 @@ class _CartPageState extends State<CartPage> {
     );
   }
 
-  void _handleCheckout() {
+  Future<void> _handleCheckout() async {
+    // Load addresses trước
+    await _loadAddresses();
+    
+    if (!mounted) return;
+    
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      isDismissible: true,
       builder: (context) {
-        return DraggableScrollableSheet(
-          initialChildSize: 0.7,
-          minChildSize: 0.5,
-          maxChildSize: 0.95,
-          expand: false,
-          builder: (context, scrollController) {
-            return Container(
-              padding: const EdgeInsets.all(24),
-              child: ListView(
-                controller: scrollController,
-                children: [
-                  Center(
-                    child: Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: AppTheme.char300,
-                        borderRadius: BorderRadius.circular(2),
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return DraggableScrollableSheet(
+              initialChildSize: 0.8,
+              minChildSize: 0.5,
+              maxChildSize: 0.95,
+              expand: false,
+              builder: (context, scrollController) {
+                return Container(
+                  padding: const EdgeInsets.all(24),
+                  child: ListView(
+                    controller: scrollController,
+                    children: [
+                      Center(
+                        child: Container(
+                          width: 40,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: AppTheme.char300,
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
                       ),
-                    ),
+                      const SizedBox(height: 24),
+                      Text(
+                        'Xác nhận đơn hàng',
+                        style: Theme.of(context).textTheme.titleLarge,
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 24),
+                      
+                      // Địa chỉ giao hàng
+                      _buildAddressSection(setModalState),
+                      const SizedBox(height: 16),
+                      
+                      // Phương thức thanh toán
+                      _buildPaymentMethodSection(setModalState),
+                      const SizedBox(height: 16),
+                      
+                      // Ghi chú
+                      _buildNoteSection(),
+                      const SizedBox(height: 24),
+                      
+                      const Divider(),
+                      const SizedBox(height: 16),
+                      
+                      // Chi tiết giá
+                      _buildCheckoutPriceDetails(),
+                      
+                      const SizedBox(height: 24),
+                      ElevatedButton(
+                        onPressed: _selectedAddress == null
+                            ? null
+                            : () {
+                                Navigator.pop(context);
+                                _proceedToPayment();
+                              },
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                        ),
+                        child: const Text('Xác nhận thanh toán'),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 24),
-                  Text(
-                    'Xác nhận đơn hàng',
-                    style: Theme.of(context).textTheme.titleLarge,
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 24),
-                  _buildCheckoutInfoSection(
-                    'Địa chỉ giao hàng',
-                    Icons.location_on,
-                    '123 Nguyễn Văn A, P.1, Q.Tân Bình, TP.HCM\nSĐT: 0901234567',
-                    onEdit: () {},
-                  ),
-                  const SizedBox(height: 16),
-                  _buildCheckoutInfoSection(
-                    'Phương thức thanh toán',
-                    Icons.payment,
-                    'Thanh toán khi nhận hàng (COD)',
-                    onEdit: () {},
-                  ),
-                  const SizedBox(height: 16),
-                  _buildCheckoutInfoSection(
-                    'Ghi chú',
-                    Icons.note,
-                    'Giao hàng giờ hành chính',
-                    onEdit: () {},
-                  ),
-                  const SizedBox(height: 24),
-                  const Divider(),
-                  const SizedBox(height: 16),
-                  _buildPriceRow('Tổng tiền hàng', '₫10.000.000'),
-                  const SizedBox(height: 8),
-                  _buildPriceRow('Giảm giá', '-₫2.000.000', color: AppTheme.success),
-                  const SizedBox(height: 8),
-                  _buildPriceRow('Phí vận chuyển', '₫50.000'),
-                  const Divider(height: 24),
-                  _buildPriceRow('Tổng thanh toán', '₫8.050.000', isTotal: true),
-                  const SizedBox(height: 24),
-                  ElevatedButton(
-                    onPressed: () {
-                      // TODO: Place order
-                      Navigator.pop(context);
-                      _showOrderSuccess();
-                    },
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                    ),
-                    child: const Text('Đặt hàng'),
-                  ),
-                ],
-              ),
+                );
+              },
             );
           },
         );
@@ -751,61 +764,299 @@ class _CartPageState extends State<CartPage> {
     );
   }
 
-  void _showOrderSuccess() {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) {
-        return AlertDialog(
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: AppTheme.success.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
+  void _proceedToPayment() {
+    final cartProvider = context.read<CartProvider>();
+    
+    final orderData = {
+      'address': _selectedAddress,
+      'paymentMethod': _paymentMethod,
+      'note': _noteController.text.trim(),
+      'cartItems': cartProvider.cart?.items,
+      'subTotal': cartProvider.subTotal,
+      'discount': cartProvider.savings,
+      'discountCode': cartProvider.discountCode,
+      'totalAmount': cartProvider.totalAmount,
+    };
+    
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CheckoutPaymentPage(orderData: orderData),
+      ),
+    );
+  }
+  
+  Future<void> _loadAddresses() async {
+    setState(() => _isLoadingAddresses = true);
+    
+    try {
+      final result = await _addressService.getAddresses();
+      
+      if (result['success'] == true && result['addresses'] != null) {
+        setState(() {
+          _addresses = result['addresses'] as List<dynamic>;
+          // Chọn địa chỉ mặc định nếu có
+          _selectedAddress = _addresses.firstWhere(
+            (addr) => addr['isDefault'] == true,
+            orElse: () => _addresses.isNotEmpty ? _addresses.first : null,
+          );
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading addresses: $e');
+    } finally {
+      setState(() => _isLoadingAddresses = false);
+    }
+  }
+  
+  Widget _buildAddressSection(StateSetter setModalState) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.location_on, size: 20, color: AppTheme.primary500),
+                const SizedBox(width: 8),
+                Text(
+                  'Địa chỉ giao hàng',
+                  style: Theme.of(context).textTheme.titleSmall,
                 ),
-                child: const Icon(
-                  Icons.check_circle,
-                  size: 64,
-                  color: AppTheme.success,
+                const Spacer(),
+                TextButton(
+                  onPressed: () => _showAddressSelector(setModalState),
+                  child: const Text('Thay đổi'),
                 ),
-              ),
-              const SizedBox(height: 24),
-              Text(
-                'Đặt hàng thành công!',
-                style: Theme.of(context).textTheme.titleLarge,
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'Cảm ơn bạn đã đặt hàng.\nChúng tôi sẽ liên hệ với bạn sớm nhất.',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppTheme.char600,
+              ],
+            ),
+            const SizedBox(height: 12),
+            if (_isLoadingAddresses)
+              const Center(child: CircularProgressIndicator())
+            else if (_selectedAddress != null)
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${_selectedAddress['fullName']} - ${_selectedAddress['phone']}',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '${_selectedAddress['address']}, ${_selectedAddress['ward']}, ${_selectedAddress['district']}, ${_selectedAddress['province']}',
+                  ),
+                  if (_selectedAddress['isDefault'] == true) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      'Mặc định',
+                      style: TextStyle(color: AppTheme.primary500, fontSize: 12),
                     ),
-                textAlign: TextAlign.center,
+                  ],
+                ],
+              )
+            else
+              Text(
+                'Chưa có địa chỉ giao hàng',
+                style: TextStyle(color: AppTheme.char600),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  void _showAddressSelector(StateSetter setModalState) {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Chọn địa chỉ giao hàng',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              const SizedBox(height: 16),
+              if (_addresses.isEmpty)
+                const Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: Text('Chưa có địa chỉ nào'),
+                )
+              else
+                ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: _addresses.length,
+                  itemBuilder: (context, index) {
+                    final address = _addresses[index];
+                    final isSelected = _selectedAddress?['_id'] == address['_id'];
+                    
+                    return ListTile(
+                      leading: Radio<String>(
+                        value: address['_id'],
+                        groupValue: _selectedAddress?['_id'],
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedAddress = address;
+                          });
+                          setModalState(() {
+                            _selectedAddress = address;
+                          });
+                          Navigator.pop(context);
+                        },
+                      ),
+                      title: Text('${address['fullName']} - ${address['phone']}'),
+                      subtitle: Text(
+                        '${address['address']}, ${address['ward']}, ${address['district']}, ${address['province']}',
+                      ),
+                      isThreeLine: true,
+                      trailing: address['isDefault'] == true
+                          ? Chip(
+                              label: const Text('Mặc định'),
+                              backgroundColor: AppTheme.primary100,
+                            )
+                          : null,
+                      onTap: () {
+                        setState(() {
+                          _selectedAddress = address;
+                        });
+                        setModalState(() {
+                          _selectedAddress = address;
+                        });
+                        Navigator.pop(context);
+                      },
+                    );
+                  },
+                ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    // TODO: Navigate to add address page
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Tính năng thêm địa chỉ sẽ được cập nhật sau'),
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.add),
+                  label: const Text('Thêm địa chỉ mới'),
+                ),
               ),
             ],
           ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-                // TODO: Navigate to orders
-              },
-              child: const Text('Xem đơn hàng'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context);
-                // TODO: Navigate to home
-              },
-              child: const Text('Tiếp tục mua sắm'),
-            ),
-          ],
         );
       },
+    );
+  }
+  
+  Widget _buildPaymentMethodSection(StateSetter setModalState) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.payment, size: 20, color: AppTheme.primary500),
+                const SizedBox(width: 8),
+                Text(
+                  'Phương thức thanh toán',
+                  style: Theme.of(context).textTheme.titleSmall,
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            RadioListTile<String>(
+              value: 'COD',
+              groupValue: _paymentMethod,
+              onChanged: (value) {
+                setState(() => _paymentMethod = value!);
+                setModalState(() => _paymentMethod = value!);
+              },
+              title: const Text('Thanh toán khi nhận hàng (COD)'),
+              subtitle: const Text('Thanh toán bằng tiền mặt khi nhận hàng'),
+              contentPadding: EdgeInsets.zero,
+            ),
+            RadioListTile<String>(
+              value: 'QR',
+              groupValue: _paymentMethod,
+              onChanged: (value) {
+                setState(() => _paymentMethod = value!);
+                setModalState(() => _paymentMethod = value!);
+              },
+              title: const Text('Chuyển khoản QR'),
+              subtitle: const Text('Quét mã QR để thanh toán'),
+              contentPadding: EdgeInsets.zero,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  Widget _buildNoteSection() {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.note, size: 20, color: AppTheme.primary500),
+                const SizedBox(width: 8),
+                Text(
+                  'Ghi chú',
+                  style: Theme.of(context).textTheme.titleSmall,
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _noteController,
+              decoration: const InputDecoration(
+                hintText: 'Nhập ghi chú cho đơn hàng (tùy chọn)',
+                border: OutlineInputBorder(),
+              ),
+              maxLines: 3,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  Widget _buildCheckoutPriceDetails() {
+    final cartProvider = context.watch<CartProvider>();
+    
+    return Column(
+      children: [
+        _buildPriceRow('Tổng tiền hàng', _formatCurrency(cartProvider.subTotal)),
+        if (cartProvider.hasDiscount) ...[
+          const SizedBox(height: 8),
+          _buildPriceRow(
+            'Mã giảm giá (${cartProvider.discountCode})',
+            '-${_formatCurrency(cartProvider.savings)}',
+            color: AppTheme.success,
+          ),
+        ],
+        const SizedBox(height: 8),
+        _buildPriceRow('Phí vận chuyển', 'Miễn phí', color: AppTheme.success),
+        const Divider(height: 24),
+        _buildPriceRow(
+          'Tổng thanh toán',
+          _formatCurrency(cartProvider.totalAmount),
+          isTotal: true,
+        ),
+      ],
     );
   }
 }

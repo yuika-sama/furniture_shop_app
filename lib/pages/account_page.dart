@@ -22,6 +22,7 @@ class AccountPage extends StatefulWidget {
 class _AccountPageState extends State<AccountPage> {
   late final UserService _userService;
   final ImagePicker _imagePicker = ImagePicker();
+  String? _lastUserId;
 
   @override
   void initState() {
@@ -30,6 +31,22 @@ class _AccountPageState extends State<AccountPage> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadUserProfile();
     });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Reload profile khi user thay đổi (đăng nhập/đăng xuất)
+    final userProvider = context.watch<UserProvider>();
+    final currentUserId = userProvider.currentUser?.id;
+    
+    if (_lastUserId != currentUserId) {
+      _lastUserId = currentUserId;
+      if (currentUserId != null) {
+        // User vừa đăng nhập, reload profile
+        Future.microtask(() => _loadUserProfile());
+      }
+    }
   }
 
   Future<void> _loadUserProfile() async {

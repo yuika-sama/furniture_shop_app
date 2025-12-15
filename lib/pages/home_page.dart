@@ -5,10 +5,13 @@ import '../providers/category_provider.dart';
 import '../providers/product_provider.dart';
 import '../providers/promotion_provider.dart';
 import '../providers/wishlist_provider.dart';
+import '../providers/cart_provider.dart';
+import '../providers/auth_provider.dart';
 import '../components/app_bar_actions.dart';
 import '../components/product_card.dart';
 import 'products_page.dart';
 import 'product_detail_page.dart';
+import 'login_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -522,8 +525,8 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildProductCard(int index) {
-    return Consumer2<ProductProvider, WishlistProvider>(
-      builder: (context, productProvider, wishlistProvider, child) {
+    return Consumer4<ProductProvider, WishlistProvider, CartProvider, AuthProvider>(
+      builder: (context, productProvider, wishlistProvider, cartProvider, authProvider, child) {
         // Use real data from API
         final newArrivals = productProvider.newArrivals;
         
@@ -564,17 +567,70 @@ class _HomePageState extends State<HomePage> {
               ),
             );
           },
-          onAddToCart: () {
-            // TODO: Add to cart using CartProvider
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Đã thêm "${product.name}" vào giỏ hàng'),
-                duration: const Duration(seconds: 2),
-                behavior: SnackBarBehavior.floating,
-              ),
+          onAddToCart: () async {
+            // Kiểm tra đăng nhập
+            if (!authProvider.isLoggedIn) {
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng'),
+                    behavior: SnackBarBehavior.floating,
+                    backgroundColor: AppTheme.error,
+                  ),
+                );
+                
+                // Navigate to login page
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const LoginPage()),
+                );
+              }
+              return;
+            }
+            
+            final result = await cartProvider.addToCart(
+              productId: product.id,
+              quantity: 1,
             );
+            
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    result['success'] == true
+                        ? 'Đã thêm "${product.name}" vào giỏ hàng'
+                        : result['message'] ?? 'Không thể thêm vào giỏ hàng',
+                  ),
+                  duration: const Duration(seconds: 2),
+                  behavior: SnackBarBehavior.floating,
+                  backgroundColor: result['success'] == true 
+                      ? AppTheme.success 
+                      : AppTheme.error,
+                ),
+              );
+            }
           },
           onToggleFavorite: () async {
+            // Kiểm tra đăng nhập
+            if (!authProvider.isLoggedIn) {
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Vui lòng đăng nhập để thêm vào danh sách yêu thích'),
+                    behavior: SnackBarBehavior.floating,
+                    backgroundColor: AppTheme.error,
+                  ),
+                );
+                
+                // Navigate to login page
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const LoginPage()),
+                );
+              }
+              return;
+            }
+            
             await wishlistProvider.toggleProduct(product.id);
             if (context.mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
@@ -596,8 +652,8 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildBestSellerCard(int index) {
-    return Consumer2<ProductProvider, WishlistProvider>(
-      builder: (context, productProvider, wishlistProvider, child) {
+    return Consumer4<ProductProvider, WishlistProvider, CartProvider, AuthProvider>(
+      builder: (context, productProvider, wishlistProvider, cartProvider, authProvider, child) {
         // Use real data from API
         final bestSellers = productProvider.bestSellers;
         
@@ -638,17 +694,70 @@ class _HomePageState extends State<HomePage> {
               ),
             );
           },
-          onAddToCart: () {
-            // TODO: Add to cart using CartProvider
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Đã thêm "${product.name}" vào giỏ hàng'),
-                duration: const Duration(seconds: 2),
-                behavior: SnackBarBehavior.floating,
-              ),
+          onAddToCart: () async {
+            // Kiểm tra đăng nhập
+            if (!authProvider.isLoggedIn) {
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng'),
+                    behavior: SnackBarBehavior.floating,
+                    backgroundColor: AppTheme.error,
+                  ),
+                );
+                
+                // Navigate to login page
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const LoginPage()),
+                );
+              }
+              return;
+            }
+            
+            final result = await cartProvider.addToCart(
+              productId: product.id,
+              quantity: 1,
             );
+            
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    result['success'] == true
+                        ? 'Đã thêm "${product.name}" vào giỏ hàng'
+                        : result['message'] ?? 'Không thể thêm vào giỏ hàng',
+                  ),
+                  duration: const Duration(seconds: 2),
+                  behavior: SnackBarBehavior.floating,
+                  backgroundColor: result['success'] == true 
+                      ? AppTheme.success 
+                      : AppTheme.error,
+                ),
+              );
+            }
           },
           onToggleFavorite: () async {
+            // Kiểm tra đăng nhập
+            if (!authProvider.isLoggedIn) {
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Vui lòng đăng nhập để thêm vào danh sách yêu thích'),
+                    behavior: SnackBarBehavior.floating,
+                    backgroundColor: AppTheme.error,
+                  ),
+                );
+                
+                // Navigate to login page
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const LoginPage()),
+                );
+              }
+              return;
+            }
+            
             await wishlistProvider.toggleProduct(product.id);
             if (context.mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
