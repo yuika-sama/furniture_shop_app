@@ -109,6 +109,7 @@ class _WishlistPageState extends State<WishlistPage> {
                         brand: product.brand?.name,
                         price: product.price,
                         isFavorite: true,
+                        model3DUrl: product.model3DUrl,
                         onTap: () {
                           // TODO: Navigate to product detail
                           debugPrint('Tapped on: ${product.name}');

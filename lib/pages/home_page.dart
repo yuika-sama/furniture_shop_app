@@ -556,6 +556,7 @@ class _HomePageState extends State<HomePage> {
           brand: product.brand?.name,
           price: product.price,
           isFavorite: isFavorite,
+          model3DUrl: product.model3DUrl,
           onTap: () {
             Navigator.push(
               context,
@@ -683,6 +684,7 @@ class _HomePageState extends State<HomePage> {
           brand: product.brand?.name,
           price: product.price,
           isFavorite: isFavorite,
+          model3DUrl: product.model3DUrl,
           onTap: () {
             Navigator.push(
               context,

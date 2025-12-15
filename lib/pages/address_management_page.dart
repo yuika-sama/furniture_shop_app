@@ -106,8 +106,25 @@ class _AddressManagementPageState extends State<AddressManagementPage> {
   }
 
   Widget _buildAddressCard(AddressModel address) {
-    return Card(
+    final isDefault = address.isDefault;
+    
+    return Container(
       margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: isDefault ? AppTheme.beige100 : Colors.white,
+        border: Border.all(
+          color: isDefault ? AppTheme.primary500 : AppTheme.char200,
+          width: isDefault ? 2 : 1,
+        ),
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -116,57 +133,55 @@ class _AddressManagementPageState extends State<AddressManagementPage> {
             Row(
               children: [
                 Expanded(
-                  child: Text(
-                    address.fullName ?? '',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                  child: Row(
+                    children: [
+                      Text(
+                        address.fullName ?? '',
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        '|',
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              color: AppTheme.char400,
+                            ),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        address.phone ?? '',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                    ],
                   ),
                 ),
-                if (address.isDefault)
+                if (isDefault)
                   Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
+                      horizontal: 10,
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: AppTheme.primary100,
+                      color: AppTheme.primary500,
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
                       'Mặc định',
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            color: AppTheme.primary600,
+                            color: Colors.white,
                             fontWeight: FontWeight.bold,
                           ),
                     ),
                   ),
               ],
             ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                const Icon(Icons.phone, size: 16, color: AppTheme.char600),
-                const SizedBox(width: 4),
-                Text(
-                  address.phone ?? '',
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-              ],
-            ),
-            const SizedBox(height: 4),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Icon(Icons.location_on, size: 16, color: AppTheme.char600),
-                const SizedBox(width: 4),
-                Expanded(
-                  child: Text(
-                    '${address.address}, ${address.ward}, ${address.district}, ${address.province}',
-                    style: Theme.of(context).textTheme.bodyMedium,
+            const SizedBox(height: 12),
+            Text(
+              '${address.address}, ${address.ward}, ${address.district}, ${address.province}',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: AppTheme.char700,
                   ),
-                ),
-              ],
             ),
             const SizedBox(height: 12),
             Row(
@@ -176,6 +191,9 @@ class _AddressManagementPageState extends State<AddressManagementPage> {
                   onPressed: () => _showEditAddressDialog(address),
                   icon: const Icon(Icons.edit, size: 18),
                   label: const Text('Sửa'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppTheme.primary500,
+                  ),
                 ),
                 const SizedBox(width: 8),
                 TextButton.icon(

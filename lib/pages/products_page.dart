@@ -555,31 +555,85 @@ class _ProductsPageState extends State<ProductsPage> {
           padding: const EdgeInsets.all(12),
           child: Row(
             children: [
-              Container(
+              SizedBox(
                 width: 100,
                 height: 100,
-                decoration: BoxDecoration(
-                  color: AppTheme.beige100,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                clipBehavior: Clip.antiAlias,
-                child: product.images.isNotEmpty
-                    ? Image.network(
-                        product.images.first,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return const Icon(
-                            Icons.image_not_supported,
-                            size: 40,
-                            color: AppTheme.char400,
-                          );
-                        },
-                      )
-                    : const Icon(
-                        Icons.chair,
-                        size: 40,
-                        color: AppTheme.primary400,
+                child: Stack(
+                  children: [
+                    Container(
+                      width: 100,
+                      height: 100,
+                      decoration: BoxDecoration(
+                        color: AppTheme.beige100,
+                        borderRadius: BorderRadius.circular(8),
                       ),
+                      clipBehavior: Clip.antiAlias,
+                      child: product.images.isNotEmpty
+                          ? Image.network(
+                              product.images.first,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return const Icon(
+                                  Icons.image_not_supported,
+                                  size: 40,
+                                  color: AppTheme.char400,
+                                );
+                              },
+                            )
+                          : const Icon(
+                              Icons.chair,
+                              size: 40,
+                              color: AppTheme.primary400,
+                            ),
+                    ),
+                    if (product.model3DUrl != null && product.model3DUrl!.isNotEmpty)
+                      Positioned(
+                        top: 8,
+                        left: 8,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 3,
+                          ),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [
+                                AppTheme.primary500,
+                                AppTheme.primary700,
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(4),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppTheme.primary500.withOpacity(0.3),
+                                blurRadius: 4,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.view_in_ar,
+                                size: 12,
+                                color: Colors.white,
+                              ),
+                              SizedBox(width: 3),
+                              Text(
+                                '3D',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(

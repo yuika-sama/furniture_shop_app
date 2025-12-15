@@ -11,6 +11,7 @@ class ProductCard extends StatefulWidget {
   final String category;
   final String? brand;
   final double price;
+  final String? model3DUrl;
   final VoidCallback? onTap;
   final VoidCallback? onAddToCart;
   final VoidCallback? onToggleFavorite;
@@ -25,6 +26,7 @@ class ProductCard extends StatefulWidget {
     required this.category,
     this.brand,
     required this.price,
+    this.model3DUrl,
     this.onTap,
     this.onAddToCart,
     this.onToggleFavorite,
@@ -180,6 +182,53 @@ class _ProductCardState extends State<ProductCard>
                               ),
                       ),
                     ),
+                    // 3D chip
+                    if (widget.model3DUrl != null && widget.model3DUrl!.isNotEmpty)
+                      Positioned(
+                        top: 12,
+                        left: 12,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [
+                                AppTheme.primary500,
+                                AppTheme.primary700,
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(6),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppTheme.primary500.withOpacity(0.3),
+                                blurRadius: 4,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.view_in_ar,
+                                size: 14,
+                                color: Colors.white,
+                              ),
+                              SizedBox(width: 4),
+                              Text(
+                                '3D',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
                     // Favorite button
                     Positioned(
                       top: 12,
