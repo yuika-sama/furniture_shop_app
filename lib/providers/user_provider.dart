@@ -261,21 +261,6 @@ class UserProvider extends ChangeNotifier {
     }
   }
 
-  /// Set default address
-  Future<bool> setDefaultAddress(String addressId) async {
-    return await updateAddress(addressId, isDefault: true);
-  }
-
-  /// Get default address
-  AddressModel? get defaultAddress {
-    try {
-      return _addresses.firstWhere((a) => a.isDefault);
-    } catch (e) {
-      return _addresses.isNotEmpty ? _addresses.first : null;
-    }
-  }
-
-  /// Clear all state
   void clear() {
     _currentUser = null;
     _addresses = [];

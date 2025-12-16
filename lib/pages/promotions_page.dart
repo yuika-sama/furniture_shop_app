@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../constants/app_theme.dart';
 import '../models/promotion_model.dart';
@@ -552,15 +553,18 @@ class _PromotionsPageState extends State<PromotionsPage>
                   const SizedBox(height: 24),
                   ElevatedButton(
                     onPressed: promotion.isValid
-                        ? () {
-                            Navigator.pop(context);
-                            // TODO: Copy code to clipboard
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('Đã sao chép mã ${promotion.code}'),
-                                behavior: SnackBarBehavior.floating,
-                              ),
-                            );
+                        ? () async {
+                            await Clipboard.setData(ClipboardData(text: promotion.code));
+                            if (context.mounted) {
+                              Navigator.pop(context);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Đã sao chép mã ${promotion.code}'),
+                                  backgroundColor: AppTheme.success,
+                                  behavior: SnackBarBehavior.floating,
+                                ),
+                              );
+                            }
                           }
                         : null,
                     style: ElevatedButton.styleFrom(

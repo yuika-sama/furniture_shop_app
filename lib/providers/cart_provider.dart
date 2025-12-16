@@ -214,22 +214,6 @@ class CartProvider with ChangeNotifier {
     return result;
   }
 
-  /// Kiểm tra product có trong giỏ không
-  bool hasProduct(String productId) {
-    return _cart?.hasProduct(productId) ?? false;
-  }
-
-  /// Lấy quantity của product
-  int getQuantity(String productId) {
-    return _cart?.getQuantity(productId) ?? 0;
-  }
-
-  /// Clear error message
-  void clearError() {
-    _errorMessage = null;
-    notifyListeners();
-  }
-
   /// Reset cart (khi logout)
   void reset() {
     _cart = null;

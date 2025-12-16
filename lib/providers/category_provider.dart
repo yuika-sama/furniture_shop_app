@@ -111,16 +111,4 @@ class CategoryProvider with ChangeNotifier {
   List<CategoryModel> get rootCategories {
     return _categoryTree;
   }
-
-  /// Clear current category
-  void clearCurrentCategory() {
-    _currentCategory = null;
-    notifyListeners();
-  }
-
-  /// Clear error
-  void clearError() {
-    _error = null;
-    notifyListeners();
-  }
 }

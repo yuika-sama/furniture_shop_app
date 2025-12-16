@@ -133,23 +133,6 @@ class AuthProvider with ChangeNotifier {
     return await _authService.forgotPassword(email: email);
   }
 
-  /// Reset Password
-  Future<Map<String, dynamic>> resetPassword({
-    required String token,
-    required String newPassword,
-  }) async {
-    return await _authService.resetPassword(
-      token: token,
-      newPassword: newPassword,
-    );
-  }
-
-  /// Clear error message
-  void clearError() {
-    _errorMessage = null;
-    notifyListeners();
-  }
-
   /// Handle auto logout when token expired
   Future<void> handleUnauthorized() async {
     print('🚪 Auto logout - Token expired or invalid');

@@ -126,83 +126,12 @@ class WishlistProvider extends ChangeNotifier {
   /// Check if product is in wishlist
   bool isInWishlist(String productId) {
     return _wishlist?.containsProduct(productId) ?? false;
-  }
+  } 
 
-  /// Get product from wishlist
-  ProductModel? getProduct(String productId) {
-    try {
-      return products.firstWhere((p) => p.id == productId);
-    } catch (e) {
-      return null;
-    }
-  }
-
-  /// Add multiple products
-  Future<bool> addMultipleProducts(List<String> productIds) async {
-    _isLoading = true;
-    _error = null;
-    notifyListeners();
-
-    try {
-      bool allSuccess = true;
-      for (final productId in productIds) {
-        try {
-          await _wishlistService.addToWishlist(productId);
-        } catch (e) {
-          allSuccess = false;
-        }
-      }
-
-      // Reload wishlist after bulk add
-      await loadWishlist();
-      return allSuccess;
-    } catch (e) {
-      _error = e.toString();
-      notifyListeners();
-      return false;
-    } finally {
-      _isLoading = false;
-    }
-  }
-
-  /// Remove multiple products
-  Future<bool> removeMultipleProducts(List<String> productIds) async {
-    _isLoading = true;
-    _error = null;
-    notifyListeners();
-
-    try {
-      bool allSuccess = true;
-      for (final productId in productIds) {
-        try {
-          await _wishlistService.removeFromWishlist(productId);
-        } catch (e) {
-          allSuccess = false;
-        }
-      }
-
-      // Reload wishlist after bulk remove
-      await loadWishlist();
-      return allSuccess;
-    } catch (e) {
-      _error = e.toString();
-      notifyListeners();
-      return false;
-    } finally {
-      _isLoading = false;
-    }
-  }
-
-  /// Clear all state
   void clear() {
     _wishlist = null;
     _error = null;
     _isLoading = false;
     notifyListeners();
-  }
-
-  /// Sync wishlist (force reload from server)
-  Future<void> sync() async {
-    await loadWishlist();
   }
 }

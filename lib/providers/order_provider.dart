@@ -201,19 +201,4 @@ class OrderProvider with ChangeNotifier {
   Future<void> refresh() async {
     await loadMyOrders(page: 1);
   }
-
-  /// Clear state
-  void clear() {
-    _orders = [];
-    _currentOrder = null;
-    _isLoading = false;
-    _error = null;
-    notifyListeners();
-  }
-
-  /// Set current order
-  void setCurrentOrder(OrderModel order) {
-    _currentOrder = order;
-    notifyListeners();
-  }
 }

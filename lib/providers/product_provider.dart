@@ -214,32 +214,4 @@ class ProductProvider with ChangeNotifier {
   Future<void> refresh() async {
     await loadProducts(page: 1);
   }
-
-  /// Set current product
-  void setCurrentProduct(ProductModel product) {
-    _currentProduct = product;
-    notifyListeners();
-  }
-
-  /// Clear products
-  void clearProducts() {
-    _products = [];
-    _pagination = null;
-    notifyListeners();
-  }
-
-  /// Clear error
-  void clearError() {
-    _error = null;
-    notifyListeners();
-  }
-
-  /// Load home page data (featured, new arrivals, best sellers)
-  Future<void> loadHomeData() async {
-    await Future.wait([
-      loadFeaturedProducts(limit: 8),
-      loadNewArrivals(limit: 8),
-      loadBestSellers(limit: 8),
-    ]);
-  }
 }

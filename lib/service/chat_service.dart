@@ -62,8 +62,4 @@ class ChatService {
   void clearHistory() {
     _chat = _model.startChat();
   }
-
-  List<Content> getChatHistory() {
-    return [];
-  }
 }

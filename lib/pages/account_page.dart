@@ -444,6 +444,12 @@ class _AccountPageState extends State<AccountPage> {
     final currentPasswordController = TextEditingController();
     final newPasswordController = TextEditingController();
     final confirmPasswordController = TextEditingController();
+    
+    // State variables for password visibility
+    bool showCurrentPassword = false;
+    bool showNewPassword = false;
+    bool showConfirmPassword = false;
+    bool isLoading = false;
 
     showModalBottomSheet(
       context: context,
@@ -451,10 +457,6 @@ class _AccountPageState extends State<AccountPage> {
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setModalState) {
-            bool showCurrentPassword = false;
-            bool showNewPassword = false;
-            bool showConfirmPassword = false;
-            bool isLoading = false;
 
             return Padding(
               padding: EdgeInsets.only(
@@ -595,7 +597,18 @@ class _AccountPageState extends State<AccountPage> {
 
                                     if (mounted) {
                                       if (success) {
+                                        // Close the modal first
                                         Navigator.pop(context);
+                                        
+                                        // Then show success message
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(
+                                            content: Text('Đổi mật khẩu thành công'),
+                                            backgroundColor: AppTheme.success,
+                                            behavior: SnackBarBehavior.floating,
+                                            duration: Duration(seconds: 2),
+                                          ),
+                                        );
                                       } else {
                                         setModalState(() {
                                           isLoading = false;
@@ -751,17 +764,6 @@ class _AccountPageState extends State<AccountPage> {
         currentPassword: currentPassword,
         newPassword: newPassword,
       );
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Đổi mật khẩu thành công'),
-            backgroundColor: AppTheme.success,
-            behavior: SnackBarBehavior.floating,
-            duration: Duration(seconds: 2),
-          ),
-        );
-      }
       return true;
     } catch (e) {
       if (mounted) {
