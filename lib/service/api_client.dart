@@ -1,9 +1,10 @@
 import 'package:dio/dio.dart';
 import 'token_storage_service.dart';
+import '../constants/app_config.dart';
 
 class ApiClient {
   late Dio dio;
-  String baseUrl = "https://furniture-shop-backend.vercel.app";
+  String baseUrl = AppConfig.baseUrl;
   Function()? onUnauthorized;
 
   ApiClient({this.onUnauthorized}) {

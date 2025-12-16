@@ -1,8 +1,9 @@
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'app_data.dart';
+import '../constants/app_config.dart';
 
 class ChatService {
-  static const _apiKey = 'AIzaSyAWWSlqxRf6pr7zNf-qWdWs2OUnWiODwoc';
+  static const _apiKey = AppConfig.geminiApiKey;
   
   static const _modelName = 'gemini-2.5-flash';
 

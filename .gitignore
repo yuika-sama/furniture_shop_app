@@ -28,6 +28,9 @@ migrate_working_dir/
 .flutter-plugins
 .flutter-plugins-dependencies
 .packages
+
+# Sensitive configuration files - DO NOT COMMIT
+lib/constants/app_config.dart
 .pub-cache/
 .pub/
 /build/
