@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../constants/app_theme.dart';
 import '../providers/auth_provider.dart';
+import '../providers/user_provider.dart';
 import 'register_page.dart';
 import 'forgot_password_page.dart';
 
@@ -42,15 +43,20 @@ class _LoginPageState extends State<LoginPage> {
 
     if (mounted) {
       if (result['success'] == true) {
-        // Login successful - navigate back
-        Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Đăng nhập thành công'),
-            backgroundColor: AppTheme.success,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
+        // Load user profile after successful login
+        await context.read<UserProvider>().loadProfile();
+        
+        if (mounted) {
+          // Login successful - navigate back
+          Navigator.pop(context);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Đăng nhập thành công'),
+              backgroundColor: AppTheme.success,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
       } else {
         // Show error
         ScaffoldMessenger.of(context).showSnackBar(
