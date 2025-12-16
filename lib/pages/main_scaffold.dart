@@ -8,6 +8,7 @@ import '../providers/wishlist_provider.dart';
 import '../providers/user_provider.dart';
 import 'home_page.dart';
 import 'categories_page.dart';
+import 'chatbot_page.dart';
 import 'promotions_page.dart';
 import 'account_page.dart';
 
@@ -24,6 +25,7 @@ class _MainScaffoldState extends State<MainScaffold> {
   final List<Widget> _pages = [
     const HomePage(),
     const CategoriesPage(),
+    const ChatbotPage(),
     const PromotionsPage(),
     const AccountPage(),
   ];
@@ -51,7 +53,7 @@ class _MainScaffoldState extends State<MainScaffold> {
           
           // Navigate to account page (login prompt will show)
           setState(() {
-            _currentIndex = 3; // Account page index
+            _currentIndex = 4; // Account page index (updated after adding chatbot)
           });
         }
       };

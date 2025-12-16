@@ -4,6 +4,7 @@ export 'auth_service.dart';
 export 'brand_service.dart';
 export 'cart_service.dart';
 export 'category_service.dart';
+export 'chat_service.dart';
 export 'product_service.dart';
 export 'order_service.dart';
 export 'review_service.dart';

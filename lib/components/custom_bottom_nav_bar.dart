@@ -42,6 +42,11 @@ class CustomBottomNavBar extends StatelessWidget {
           label: 'Phân loại',
         ),
         BottomNavigationBarItem(
+          icon: Icon(Icons.smart_toy_outlined),
+          activeIcon: Icon(Icons.smart_toy),
+          label: 'AI Chat',
+        ),
+        BottomNavigationBarItem(
           icon: Icon(Icons.local_offer_outlined),
           activeIcon: Icon(Icons.local_offer),
           label: 'Khuyến mãi',
