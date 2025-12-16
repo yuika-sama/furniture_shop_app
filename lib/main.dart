@@ -11,7 +11,6 @@ import 'service/order_service.dart';
 import 'service/product_service.dart';
 import 'service/promotion_service.dart';
 import 'service/review_service.dart';
-import 'service/upload_service.dart';
 import 'service/user_service.dart';
 import 'service/wishlist_service.dart';
 
@@ -81,9 +80,6 @@ class MyApp extends StatelessWidget {
         ),
         ProxyProvider<ApiClient, ReviewService>(
           update: (_, apiClient, __) => ReviewService(apiClient),
-        ),
-        ProxyProvider<ApiClient, UploadService>(
-          update: (_, apiClient, __) => UploadService(apiClient),
         ),
         ProxyProvider<ApiClient, UserService>(
           update: (_, apiClient, __) => UserService(apiClient),

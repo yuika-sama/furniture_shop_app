@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../constants/app_theme.dart';
+import '../providers/auth_provider.dart';
 
 class ForgotPasswordPage extends StatefulWidget {
   const ForgotPasswordPage({super.key});
@@ -9,8 +11,10 @@ class ForgotPasswordPage extends StatefulWidget {
 }
 
 class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
+  final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   bool _emailSent = false;
+  bool _isLoading = false;
   String _sentToEmail = '';
 
   @override
@@ -19,22 +23,92 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     super.dispose();
   }
 
-  void _sendResetEmail() {
-    setState(() {
-      _sentToEmail = _emailController.text;
-      _emailSent = true;
-    });
+  Future<void> _sendResetEmail() async {
+    // Validate email
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    final email = _emailController.text.trim();
+    
+    setState(() => _isLoading = true);
+
+    try {
+      final authProvider = context.read<AuthProvider>();
+      final result = await authProvider.forgotPassword(email: email);
+
+      if (mounted) {
+        setState(() => _isLoading = false);
+
+        if (result['success'] == true) {
+          setState(() {
+            _sentToEmail = email;
+            _emailSent = true;
+          });
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(result['message'] ?? 'Có lỗi xảy ra'),
+              backgroundColor: AppTheme.error,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Đã có lỗi xảy ra: $e'),
+            backgroundColor: AppTheme.error,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
   }
 
-  void _resendEmail() {
-    // TODO: Implement resend logic
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Đã gửi lại email khôi phục'),
-        duration: Duration(seconds: 2),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+  Future<void> _resendEmail() async {
+    setState(() => _isLoading = true);
+
+    try {
+      final authProvider = context.read<AuthProvider>();
+      final result = await authProvider.forgotPassword(email: _sentToEmail);
+
+      if (mounted) {
+        setState(() => _isLoading = false);
+
+        if (result['success'] == true) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Đã gửi lại email khôi phục'),
+              backgroundColor: AppTheme.success,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(result['message'] ?? 'Có lỗi xảy ra'),
+              backgroundColor: AppTheme.error,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Đã có lỗi xảy ra: $e'),
+            backgroundColor: AppTheme.error,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -119,9 +193,11 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   }
 
   Widget _buildEmailInputContent() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
+    return Form(
+      key: _formKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
         // Instruction Text
         Text(
           'Nhập email đã đăng ký, chúng tôi sẽ gửi hướng dẫn khôi phục mật khẩu cho bạn.',
@@ -149,6 +225,16 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
         TextFormField(
           controller: _emailController,
           keyboardType: TextInputType.emailAddress,
+          enabled: !_isLoading,
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'Vui lòng nhập email';
+            }
+            if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+              return 'Email không hợp lệ';
+            }
+            return null;
+          },
           decoration: InputDecoration(
             hintText: 'your@email.com',
             hintStyle: TextStyle(
@@ -174,6 +260,20 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                 width: 2,
               ),
             ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(
+                color: AppTheme.error,
+                width: 1,
+              ),
+            ),
+            focusedErrorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(
+                color: AppTheme.error,
+                width: 2,
+              ),
+            ),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 16,
               vertical: 14,
@@ -184,7 +284,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
 
         // Send Email Button
         ElevatedButton(
-          onPressed: _sendResetEmail,
+          onPressed: _isLoading ? null : _sendResetEmail,
           style: ElevatedButton.styleFrom(
             backgroundColor: AppTheme.primary500,
             foregroundColor: Colors.white,
@@ -194,15 +294,25 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
             ),
             elevation: 0,
           ),
-          child: const Text(
-            'Gửi email khôi phục',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
+          child: _isLoading
+              ? const SizedBox(
+                  height: 20,
+                  width: 20,
+                  child: CircularProgressIndicator(
+                    color: Colors.white,
+                    strokeWidth: 2,
+                  ),
+                )
+              : const Text(
+                  'Gửi email khôi phục',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
         ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -278,7 +388,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
 
         // Resend Email Button
         OutlinedButton(
-          onPressed: _resendEmail,
+          onPressed: _isLoading ? null : _resendEmail,
           style: OutlinedButton.styleFrom(
             foregroundColor: AppTheme.primary500,
             side: BorderSide(color: AppTheme.primary500, width: 1.5),
@@ -287,13 +397,22 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
               borderRadius: BorderRadius.circular(8),
             ),
           ),
-          child: const Text(
-            'Gửi lại email',
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
+          child: _isLoading
+              ? SizedBox(
+                  height: 20,
+                  width: 20,
+                  child: CircularProgressIndicator(
+                    color: AppTheme.primary500,
+                    strokeWidth: 2,
+                  ),
+                )
+              : const Text(
+                  'Gửi lại email',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
         ),
       ],
     );
