@@ -9,7 +9,6 @@ import '../service/user_service.dart';
 import '../service/api_client.dart';
 import 'login_page.dart';
 import 'register_page.dart';
-import 'cart_page.dart';
 import 'address_management_page.dart';
 import 'orders_page.dart';
 
@@ -768,7 +767,7 @@ class _AccountPageState extends State<AccountPage> {
       if (mounted) {
         String errorMessage = 'Lỗi: ${e.toString()}';
         
-        // Parse error message for better UX
+        // Parse error message
         if (e.toString().contains('Current password is incorrect')) {
           errorMessage = 'Mật khẩu hiện tại không đúng';
         } else if (e.toString().contains('password')) {

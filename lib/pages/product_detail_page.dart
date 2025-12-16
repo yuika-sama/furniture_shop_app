@@ -17,7 +17,7 @@ import 'login_page.dart';
 
 class ProductDetailPage extends StatefulWidget {
   final String productSlug;
-  final ProductModel? initialProduct; // Dùng để hiển thị nhanh trong khi chờ API
+  final ProductModel? initialProduct;
 
   const ProductDetailPage({
     super.key,
@@ -32,7 +32,7 @@ class ProductDetailPage extends StatefulWidget {
 class _ProductDetailPageState extends State<ProductDetailPage>
     with SingleTickerProviderStateMixin {
   late final ProductService _productService;
-  late final ApiClient _apiClient; // Khởi tạo 1 lần để dùng lại
+  late final ApiClient _apiClient;
   late final TabController _tabController;
   
   ProductModel? _product;
@@ -49,7 +49,6 @@ class _ProductDetailPageState extends State<ProductDetailPage>
     _productService = ProductService(_apiClient);
     _tabController = TabController(length: 3, vsync: this);
     
-    // Sử dụng initialProduct nếu có để hiển thị nhanh
     if (widget.initialProduct != null) {
       _product = widget.initialProduct;
       _isLoading = false;
@@ -67,7 +66,6 @@ class _ProductDetailPageState extends State<ProductDetailPage>
   Future<void> _loadProductDetail() async {
     if (!mounted) return;
     
-    // Chỉ set loading nếu chưa có initialProduct
     if (widget.initialProduct == null) {
       setState(() {
         _isLoading = true;
@@ -105,13 +103,11 @@ class _ProductDetailPageState extends State<ProductDetailPage>
           _isLoading = false;
         });
         
-        // Load reviews sau khi có product ID (không crash page nếu fail)
+        // Load reviews sau khi có product ID 
         try {
           final reviewProvider = context.read<ReviewProvider>();
           await reviewProvider.loadReviewsByProduct(product.id);
-          print('✅ Loaded ${reviewProvider.reviews.length} reviews for product ${product.id}');
         } catch (reviewError) {
-          print('⚠️ Failed to load reviews: $reviewError');
           // Không crash page nếu reviews fail
         }
       }
@@ -191,8 +187,8 @@ class _ProductDetailPageState extends State<ProductDetailPage>
         IconButton(
           icon: const Icon(Icons.share, color: Colors.black),
           onPressed: () async {
+            // Tạm thời gọi trực tiếp thay vì thông qua service
             final url = 'https://furniture-shop-frontend-two.vercel.app/products/${_product!.slug}';
-            // Copy to clipboard
             await Clipboard.setData(ClipboardData(text: url));
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
@@ -227,7 +223,6 @@ class _ProductDetailPageState extends State<ProductDetailPage>
   Widget _buildImageCarousel() {
     final images = _product!.images;
     
-    // FIX: Xử lý trường hợp không có ảnh
     if (images.isEmpty) {
       return Container(
         height: 350,
@@ -281,7 +276,6 @@ class _ProductDetailPageState extends State<ProductDetailPage>
                 );
               },
             ),
-            // Bottom gradient overlay
             Positioned(
               left: 0,
               right: 0,
@@ -300,7 +294,7 @@ class _ProductDetailPageState extends State<ProductDetailPage>
                 ),
               ),
             ),
-            // Image indicators - Modern style
+            // Image indicators
             if (images.length > 1)
               Positioned(
                 bottom: 20,
@@ -332,7 +326,7 @@ class _ProductDetailPageState extends State<ProductDetailPage>
                   ),
                 ),
               ),
-            // Sale badge - Improved design
+            // Sale badge
             if (_product!.hasDiscount)
               Positioned(
                 top: 16,
@@ -398,7 +392,7 @@ class _ProductDetailPageState extends State<ProductDetailPage>
                   ),
                 ),
               ),
-            // 3D và AR buttons - Improved design
+            // 3D và AR buttons
             if (_product!.model3DUrl != null && _product!.model3DUrl!.isNotEmpty)
               Positioned(
                 bottom: 20,

@@ -94,7 +94,7 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
 
-          // Promotional Banner (Navigate to Products Page)
+          // Promotional Banner
           SliverToBoxAdapter(
             child: _buildPromoBanner(),
           ),
@@ -662,7 +662,6 @@ class _HomePageState extends State<HomePage> {
   Widget _buildBestSellerCard(int index) {
     return Consumer4<ProductProvider, WishlistProvider, CartProvider, AuthProvider>(
       builder: (context, productProvider, wishlistProvider, cartProvider, authProvider, child) {
-        // Use real data from API
         final bestSellers = productProvider.bestSellers;
         
         if (bestSellers.isEmpty) {

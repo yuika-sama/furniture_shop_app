@@ -16,7 +16,6 @@ class _SearchPageState extends State<SearchPage> {
   final TextEditingController _searchController = TextEditingController();
   late final CategoryService _categoryService;
 
-  // Biến loading state cho category
   bool _isLoadingCategories = true;
   List<CategoryModel> _categories = [];
 
@@ -74,7 +73,6 @@ class _SearchPageState extends State<SearchPage> {
     }
   }
 
-  // Hàm helper lấy icon đưa ra ngoài để tối ưu
   IconData _getCategoryIcon(String name) {
     final nameLower = name.toLowerCase();
     if (nameLower.contains('phòng khách') || nameLower.contains('living')) {
@@ -98,19 +96,16 @@ class _SearchPageState extends State<SearchPage> {
     if (query.trim().isEmpty) return;
 
     setState(() {
-      // Xóa nếu đã tồn tại để đưa lên đầu
       if (_recentSearches.contains(query)) {
         _recentSearches.remove(query);
       }
       _recentSearches.insert(0, query);
 
-      // Giới hạn lịch sử tìm kiếm là 5
       if (_recentSearches.length > 5) {
         _recentSearches.removeLast();
       }
     });
 
-    // Navigate to ProductsPage with search query
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -126,29 +121,26 @@ class _SearchPageState extends State<SearchPage> {
     return Scaffold(
       appBar: AppBar(
         centerTitle: false,
-        // Giả sử AppTheme của bạn có màu nền, nếu không hãy thêm backgroundColor
         title: TextField(
           controller: _searchController,
           autofocus: true,
           style: const TextStyle(color: AppTheme.char900),
-          textInputAction: TextInputAction.search, // Hiển thị nút Search trên bàn phím
+          textInputAction: TextInputAction.search,
           decoration: InputDecoration(
             hintText: 'Tìm kiếm sản phẩm...',
             hintStyle: TextStyle(color: AppTheme.char900.withOpacity(0.7)),
             border: InputBorder.none,
-            // Nút xóa chỉ hiện khi có text
             suffixIcon: _searchController.text.isNotEmpty
                 ? IconButton(
               icon: const Icon(Icons.clear, color: AppTheme.char900),
               onPressed: () {
                 _searchController.clear();
-                setState(() {}); // Rebuild để ẩn nút clear
+                setState(() {}); 
               },
             )
                 : null,
           ),
           onChanged: (value) {
-            // Rebuild để hiển thị/ẩn nút clear
             setState(() {});
           },
           onSubmitted: _performSearch,
@@ -162,7 +154,6 @@ class _SearchPageState extends State<SearchPage> {
           ),
         ],
       ),
-      // Luôn hiển thị gợi ý, vì khi search sẽ chuyển trang khác
       body: _buildSearchSuggestions(),
     );
   }
@@ -194,7 +185,6 @@ class _SearchPageState extends State<SearchPage> {
               ],
             ),
             const SizedBox(height: 8),
-            // Sử dụng ListView.separated hoặc map đều được, ở đây dùng map như cũ
             ..._recentSearches.map((search) => ListTile(
               contentPadding: EdgeInsets.zero, // Tối ưu padding
               leading: const Icon(Icons.history, color: AppTheme.char500),
@@ -268,7 +258,6 @@ class _SearchPageState extends State<SearchPage> {
       );
     }
 
-    // Lấy 4 item đầu tiên, hoặc ít hơn nếu danh sách < 4
     final displayCategories = _categories.take(4).toList();
 
     return GridView.builder(
@@ -292,7 +281,6 @@ class _SearchPageState extends State<SearchPage> {
                 MaterialPageRoute(
                   builder: (context) => ProductsPage(
                     categoryId: category.id,
-                    // Có thể truyền thêm tên category nếu ProductsPage hỗ trợ để hiển thị title
                   ),
                 ),
               );

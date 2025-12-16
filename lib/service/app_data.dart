@@ -1,7 +1,7 @@
 const String appKnowledgeBase = '''
 # Tài Liệu Dữ Liệu Nguồn - Ứng Dụng Furniture Shop (Homi Furniture)
 
-## 📋 Tổng Quan Ứng Dụng
+## Tổng Quan Ứng Dụng
 
 **Homi Furniture** là ứng dụng thương mại điện tử bán nội thất được xây dựng bằng Flutter. Ứng dụng kết nối với backend qua REST API và cung cấp đầy đủ chức năng mua sắm trực tuyến.
 
@@ -13,7 +13,7 @@ const String appKnowledgeBase = '''
 
 ---
 
-## 🏗️ Cấu Trúc Dự Án
+## Cấu Trúc Dự Án
 
 ```
 lib/
@@ -29,7 +29,7 @@ lib/
 
 ---
 
-## 📦 Models (Mô Hình Dữ Liệu)
+## Models (Mô Hình Dữ Liệu)
 
 ### 1. ProductModel (Sản Phẩm)
 **File**: `lib/models/product_model.dart`
@@ -160,7 +160,7 @@ lib/
 
 ---
 
-## 🔌 Services (API Services)
+## Services (API Services)
 
 ### 1. ProductService
 - `getAllProducts()`: Lấy danh sách sản phẩm với filter
@@ -190,7 +190,7 @@ lib/
 
 ---
 
-## 🚀 Luồng Hoạt Động Chính
+## Luồng Hoạt Động Chính
 
 ### 1. Đăng nhập/Đăng ký:
 1. User nhập email, password
@@ -216,7 +216,7 @@ lib/
 
 ---
 
-## 📝 Lưu Ý Quan Trọng
+## Lưu Ý Quan Trọng
 
 1. **Pagination**: Hầu hết API có hỗ trợ phân trang với query params `page` và `limit`
 2. **Error Handling**: Tất cả providers đều có `error` state
@@ -226,7 +226,7 @@ lib/
 
 ---
 
-## 🎨 UI/UX Features
+## UI/UX Features
 
 1. **Lazy Loading Images**: Sử dụng LazyImage component
 2. **Pull to Refresh**: Hầu hết pages có hỗ trợ

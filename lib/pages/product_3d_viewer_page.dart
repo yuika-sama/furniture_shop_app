@@ -25,11 +25,11 @@ class _Product3DViewerPageState extends State<Product3DViewerPage> {
   bool _isDownloading = true;
   bool _hasError = false;
   String? _errorMessage;
-  String? _localModelPath; // File path local sau khi download
-  String? _remoteModelUrl; // URL gốc từ server
+  String? _localModelPath;
+  String? _remoteModelUrl;
   double _downloadProgress = 0.0;
   String _loadingStatus = 'Đang kiểm tra cache...';
-  int _resetCounter = 0; // Counter để force rebuild ModelViewer khi reset
+  int _resetCounter = 0;
 
   @override
   void initState() {
@@ -58,20 +58,14 @@ class _Product3DViewerPageState extends State<Product3DViewerPage> {
         url = _apiClient.getImageUrl(url);
       }
 
-      // 3. Encode URL và đảm bảo HTTPS
+      // 3. Encode URL
       url = Uri.encodeFull(url);
       if (url.startsWith('http://')) {
         url = url.replaceFirst('http://', 'https://');
       }
-
-      // 4. Xử lý xoá phần thừa sau đuôi .glb
-      // Tìm vị trí bắt đầu của chuỗi ".glb"
       int extensionIndex = url.indexOf('.glb');
 
-      // Nếu tìm thấy ".glb" trong URL
             if (extensionIndex != -1) {
-              // Cắt chuỗi từ đầu cho đến hết chữ "b" của .glb
-              // +4 là độ dài của chuỗi ".glb"
               url = url.substring(0, extensionIndex + 4);
             }
 
@@ -318,19 +312,12 @@ class _Product3DViewerPageState extends State<Product3DViewerPage> {
       return _buildDownloadingView();
     }
 
-    // Sử dụng ảnh đầu tiên của sản phẩm làm poster với full URL
     final posterUrl = widget.product.images.isNotEmpty 
         ? _apiClient.getImageUrl(widget.product.images.first)
         : '';
     
     // Sử dụng file:// scheme cho local file
     final localFileUrl = 'file://$_localModelPath';
-    
-    debugPrint('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    debugPrint('🎨 Rendering ModelViewer');
-    debugPrint('Local file: $localFileUrl');
-    debugPrint('Poster: $posterUrl');
-    debugPrint('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     
     return ModelViewer(
       key: ValueKey('${_localModelPath}_$_resetCounter'),
@@ -402,22 +389,22 @@ class _Product3DViewerPageState extends State<Product3DViewerPage> {
         const modelViewer = document.querySelector('model-viewer');
         
         if (!modelViewer) {
-          console.error('❌ Model viewer element not found');
+          console.error('Model viewer element not found');
         } else {
-          console.log('✅ Model viewer initialized');
-          console.log('📦 Model src:', modelViewer.src);
+          console.log('Model viewer initialized');
+          console.log('Model src:', modelViewer.src);
           
           modelViewer.addEventListener('load', () => {
-            console.log('✅ Model loaded successfully from local file!');
+            console.log('Model loaded successfully from local file!');
           });
           
           modelViewer.addEventListener('error', (event) => {
-            console.error('❌ Model loading error:', event);
+            console.error('Model loading error:', event);
           });
           
           modelViewer.addEventListener('progress', (event) => {
             const progress = (event.detail.totalProgress * 100).toFixed(0);
-            console.log('📊 Rendering progress:', progress + '%');
+            console.log('Rendering progress:', progress + '%');
           });
         }
       ''',
@@ -526,13 +513,11 @@ class _Product3DViewerPageState extends State<Product3DViewerPage> {
                 Expanded(
                   child: OutlinedButton.icon(
                     onPressed: () {
-                      // Force rebuild ModelViewer để reset camera về vị trí ban đầu
+                      // Force rebuild ModelViewer
                       setState(() {
                         _resetCounter++;
                       });
-                      
-                      debugPrint('🔄 Reset camera view (counter: $_resetCounter)');
-                      
+                
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text('Đã reset góc nhìn về mặc định'),

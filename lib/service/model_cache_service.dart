@@ -16,18 +16,11 @@ class ModelCacheService {
     Function(double progress)? onProgress,
   }) async {
     try {
-      debugPrint('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      debugPrint('📥 Starting model download...');
-      debugPrint('Product ID: $productId');
-      debugPrint('Model URL: $modelUrl');
-      
       // 1. Check nếu đã cache
       final cachedPath = await getCachedModelPath(productId);
       if (cachedPath != null) {
         final file = File(cachedPath);
         if (await file.exists()) {
-          debugPrint('✅ Model already cached at: $cachedPath');
-          debugPrint('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
           return cachedPath;
         } else {
           // File đã bị xóa, clear cache
@@ -46,7 +39,6 @@ class ModelCacheService {
       final fileName = '${productId}_model.glb';
       final filePath = '${modelsDir.path}/$fileName';
 
-      debugPrint('📁 Saving to: $filePath');
 
       // 4. Download file với progress tracking
       await _dio.download(
@@ -55,7 +47,6 @@ class ModelCacheService {
         onReceiveProgress: (received, total) {
           if (total > 0) {
             final progress = received / total;
-            debugPrint('📊 Download progress: ${(progress * 100).toStringAsFixed(1)}%');
             onProgress?.call(progress);
           }
         },
@@ -72,24 +63,17 @@ class ModelCacheService {
       }
 
       final fileSize = await file.length();
-      debugPrint('✅ Download complete! File size: ${(fileSize / 1024 / 1024).toStringAsFixed(2)} MB');
-
       // 6. Lưu mapping vào SharedPreferences
       await _saveCacheMapping(productId, filePath);
 
-      debugPrint('💾 Cached mapping saved');
-      debugPrint('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
       return filePath;
     } catch (e, stackTrace) {
-      debugPrint('❌ Error downloading model: $e');
-      debugPrint('Stack trace: $stackTrace');
-      debugPrint('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
       return null;
     }
   }
 
-  /// Lấy đường dẫn file model đã cache (nếu có)
+  /// Lấy đường dẫn file model đã cache
   Future<String?> getCachedModelPath(String productId) async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -122,7 +106,6 @@ class ModelCacheService {
           await file.delete();
         }
         await _clearCacheForProduct(productId);
-        debugPrint('🗑️ Deleted cached model for product: $productId');
         return true;
       }
       return false;
@@ -151,7 +134,6 @@ class ModelCacheService {
       
       return totalSize;
     } catch (e) {
-      debugPrint('Error calculating cache size: $e');
       return 0;
     }
   }
@@ -175,7 +157,6 @@ class ModelCacheService {
         }
       }
 
-      debugPrint('🗑️ Cleared all model cache');
     } catch (e) {
       debugPrint('Error clearing all cache: $e');
     }

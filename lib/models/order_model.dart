@@ -2,7 +2,7 @@ import 'product_model.dart';
 import 'user_model.dart';
 import 'cart_model.dart';
 
-/// Order Model - Map với Order schema trong backend
+/// Order Model
 class OrderModel {
   final String id;
   final String? userId;
@@ -142,7 +142,7 @@ class OrderModel {
 /// Order Item - Sản phẩm trong đơn hàng
 class OrderItem {
   final String productId;
-  final ProductModel? product; // Populated
+  final ProductModel? product; 
   final String name;
   final int quantity;
   final double price;

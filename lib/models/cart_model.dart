@@ -3,7 +3,7 @@ import 'product_model.dart';
 /// Cart Item Model
 class CartItem {
   final String productId;
-  final ProductModel? product; // Populated từ backend
+  final ProductModel? product; 
   final int quantity;
   final double price;
 
@@ -84,7 +84,7 @@ class DiscountInfo {
   bool get hasDiscount => code != null && amount > 0;
 }
 
-/// Cart Model - Map với Cart schema trong backend
+/// Cart Model
 class CartModel {
   final String id;
   final String userId;
@@ -203,11 +203,11 @@ class DiscountApplyResponse {
   }
 }
 
-/// Discount Details từ backend khi apply
+/// Discount Details
 class DiscountDetails {
   final String code;
   final double amount;
-  final String type; // 'percentage' hoặc 'fixed'
+  final String type; 
   final double value;
 
   DiscountDetails({

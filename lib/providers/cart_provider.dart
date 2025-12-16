@@ -5,7 +5,6 @@ import '../service/cart_service.dart';
 import 'auth_provider.dart';
 
 /// Cart State Provider
-/// Quản lý trạng thái giỏ hàng trong app
 class CartProvider with ChangeNotifier {
   final CartService _cartService;
   final AuthProvider? _authProvider;

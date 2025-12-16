@@ -1,4 +1,4 @@
-/// Category Model - Map với Category schema trong backend
+/// Category Model 
 class CategoryModel {
   final String id;
   final String name;
@@ -6,9 +6,9 @@ class CategoryModel {
   final String? image;
   final String? description;
   final String? parentCategoryId;
-  final CategoryModel? parentCategory; // Populated từ backend
+  final CategoryModel? parentCategory; 
   final int productCount;
-  final List<CategoryModel> children; // Subcategories (cho tree structure)
+  final List<CategoryModel> children; 
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -33,7 +33,6 @@ class CategoryModel {
       slug: json['slug'] ?? '',
       image: json['image'],
       description: json['description'],
-      // parentCategory có thể là string (id) hoặc object (populated)
       parentCategoryId: json['parentCategory'] is String
           ? json['parentCategory']
           : json['parentCategory']?['_id'],
@@ -41,7 +40,6 @@ class CategoryModel {
           ? CategoryModel.fromJson(json['parentCategory'])
           : null,
       productCount: json['productCount'] ?? 0,
-      // Parse children nếu có (cho tree structure)
       children: json['children'] != null
           ? (json['children'] as List)
               .map((child) => CategoryModel.fromJson(child))
@@ -70,7 +68,7 @@ class CategoryModel {
     };
   }
 
-  /// Check if this is a parent category (no parent)
+  /// Check if this is a parent category
   bool get isParent => parentCategoryId == null;
 
   /// Check if this is a subcategory

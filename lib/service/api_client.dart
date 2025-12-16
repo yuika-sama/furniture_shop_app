@@ -1,5 +1,4 @@
 import 'package:dio/dio.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'token_storage_service.dart';
 
 class ApiClient {
@@ -26,27 +25,15 @@ class ApiClient {
           options.headers['Authorization'] = 'Bearer $token';
         }
         
-        // Log request (chỉ trong development)
-        print('📤 [${options.method}] ${options.uri}');
-        if (options.queryParameters.isNotEmpty) {
-          print('   Query: ${options.queryParameters}');
-        }
-        
         return handler.next(options);
       },
       onResponse: (response, handler) {
-        // Log response (chỉ trong development)
-        print('✅ [${response.statusCode}] ${response.requestOptions.uri}');
         return handler.next(response);
       },
       onError: (DioException e, handler) async {
-        // Log error
-        print('❌ [${e.response?.statusCode}] ${e.requestOptions.uri}');
-        print('   Error: ${e.message}');
         
         // Handle 401 (Unauthorized) or 403 (Forbidden) - Token expired or invalid
         if (e.response?.statusCode == 401 || e.response?.statusCode == 403) {
-          print('🔒 Token expired or invalid - Auto logout');
           
           // Clear all stored tokens
           await TokenStorageService.clearAll();

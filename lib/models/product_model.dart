@@ -13,7 +13,7 @@ class ProductModel {
   final List<String> images;
   final String? model3DUrl;
   
-  // Category & Brand (có thể là ID hoặc populated object)
+  // Category & Brand 
   final String categoryId;
   final CategoryModel? category;
   final String? brandId;
@@ -249,7 +249,6 @@ class Dimensions {
     }
     
     if (value is String) {
-      // Handle range like "1140-1220" - take the first value
       if (value.contains('-')) {
         final parts = value.split('-');
         if (parts.isNotEmpty) {

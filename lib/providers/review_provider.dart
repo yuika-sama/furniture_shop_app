@@ -69,7 +69,6 @@ class ReviewProvider with ChangeNotifier {
     bool loadMore = false,
   }) async {
     try {
-      print('📝 Loading reviews for product: $productId');
       if (!loadMore) {
         _isLoading = true;
         _errorMessage = null;
@@ -85,9 +84,6 @@ class ReviewProvider with ChangeNotifier {
         sortBy: sortBy,
       );
 
-      print('✅ Got ${response.reviews.length} reviews');
-      print('📊 Rating stats: ${response.ratingStats?.length ?? 0}');
-
       if (loadMore) {
         _reviews.addAll(response.reviews);
       } else {
@@ -101,7 +97,6 @@ class ReviewProvider with ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     } catch (e) {
-      print('❌ Error loading reviews: $e');
       _errorMessage = e.toString();
       _isLoading = false;
       notifyListeners();

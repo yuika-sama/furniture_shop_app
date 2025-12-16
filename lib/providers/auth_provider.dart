@@ -1,11 +1,9 @@
 import 'package:flutter/foundation.dart';
 import '../models/user_model.dart';
-import '../service/api_client.dart';
 import '../service/auth_service.dart';
 import '../service/token_storage_service.dart';
 
 /// Auth State Provider
-/// Quản lý trạng thái authentication trong app
 class AuthProvider with ChangeNotifier {
   final AuthService _authService;
   
@@ -152,7 +150,7 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  /// Handle auto logout when token expired (called from ApiClient)
+  /// Handle auto logout when token expired
   Future<void> handleUnauthorized() async {
     print('🚪 Auto logout - Token expired or invalid');
     _currentUser = null;

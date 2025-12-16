@@ -20,7 +20,6 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   }
 
   void _sendResetEmail() {
-    // TODO: Implement actual email sending logic
     setState(() {
       _sentToEmail = _emailController.text;
       _emailSent = true;
@@ -95,7 +94,6 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                 // Back to Login Link
                 TextButton.icon(
                   onPressed: () {
-                    // TODO: Navigate back to login page
                     Navigator.pop(context);
                   },
                   icon: Icon(

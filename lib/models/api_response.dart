@@ -1,5 +1,4 @@
 /// Generic API Response wrapper
-/// Để wrap các response từ backend với cấu trúc thống nhất
 class ApiResponse<T> {
   final bool success;
   final String? message;

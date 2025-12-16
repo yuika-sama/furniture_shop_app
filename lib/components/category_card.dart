@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../constants/app_theme.dart';
 
-/// Category card component with image background and title overlay
+/// Category card
 class CategoryCard extends StatelessWidget {
   final String title;
   final String imagePath;

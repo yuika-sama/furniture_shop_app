@@ -783,51 +783,6 @@ class _ProductsPageState extends State<ProductsPage> {
     );
   }
 
-  Widget _buildPagination() {
-    if (_pagination == null) return const SizedBox.shrink();
-
-    final totalPages = _pagination!['totalPages'] ?? 1;
-    if (totalPages <= 1) return const SizedBox.shrink();
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border(
-          top: BorderSide(color: AppTheme.char200),
-        ),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          IconButton(
-            icon: const Icon(Icons.chevron_left),
-            onPressed: _currentPage > 1
-                ? () {
-                    setState(() => _currentPage--);
-                    _loadProducts();
-                  }
-                : null,
-          ),
-          const SizedBox(width: 16),
-          Text(
-            'Trang $_currentPage / $totalPages',
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
-          const SizedBox(width: 16),
-          IconButton(
-            icon: const Icon(Icons.chevron_right),
-            onPressed: _currentPage < totalPages
-                ? () {
-                    setState(() => _currentPage++);
-                    _loadProducts();
-                  }
-                : null,
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildEmptyState() {
     return Center(

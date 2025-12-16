@@ -4,7 +4,7 @@ class UserModel {
   final String email;
   final String fullName;
   final String? phone;
-  final String role; // 'user' hoặc 'admin'
+  final String role;
   final String? avatar;
   final List<AddressModel> address;
   final DateTime? createdAt;
@@ -141,7 +141,7 @@ class AddressModel {
     return parts.join(', ');
   }
 
-  /// Get short address (without ward)
+  /// Get short address
   String get shortAddress {
     final parts = <String>[];
     if (address != null && address!.isNotEmpty) parts.add(address!);

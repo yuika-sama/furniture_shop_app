@@ -51,9 +51,9 @@ class _MainScaffoldState extends State<MainScaffold> {
             ),
           );
           
-          // Navigate to account page (login prompt will show)
+          // Navigate to account page
           setState(() {
-            _currentIndex = 4; // Account page index (updated after adding chatbot)
+            _currentIndex = 4; // Account page index
           });
         }
       };

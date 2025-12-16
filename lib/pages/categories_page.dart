@@ -17,9 +17,8 @@ class CategoriesPage extends StatefulWidget {
 }
 
 class _CategoriesPageState extends State<CategoriesPage>
-    with SingleTickerProviderStateMixin {
+  with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  String _selectedFilter = 'Tất cả';
   late final BrandService _brandService;
   List<BrandModel> _brands = [];
   bool _isLoadingBrands = false;
@@ -502,72 +501,6 @@ class _CategoriesPageState extends State<CategoriesPage>
           );
         },
       ),
-    );
-  }
-
-  void _showFilterBottomSheet() {
-    showModalBottomSheet(
-      context: context,
-      builder: (context) {
-        return Container(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Bộ lọc',
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text('Đóng'),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Sắp xếp theo',
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              const SizedBox(height: 12),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  'Tất cả',
-                  'Mới nhất',
-                  'Bán chạy',
-                  'Giá tăng dần',
-                  'Giá giảm dần',
-                  'Đánh giá cao',
-                ].map((filter) {
-                  final isSelected = _selectedFilter == filter;
-                  return FilterChip(
-                    label: Text(filter),
-                    selected: isSelected,
-                    onSelected: (selected) {
-                      setState(() {
-                        _selectedFilter = filter;
-                      });
-                      Navigator.pop(context);
-                    },
-                    selectedColor: AppTheme.primary100,
-                    checkmarkColor: AppTheme.primary500,
-                    labelStyle: TextStyle(
-                      color: isSelected ? AppTheme.primary500 : AppTheme.char700,
-                    ),
-                  );
-                }).toList(),
-              ),
-              const SizedBox(height: 24),
-            ],
-          ),
-        );
-      },
     );
   }
 }

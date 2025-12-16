@@ -114,8 +114,6 @@ class UserProvider extends ChangeNotifier {
     }
   }
 
-  // ============ ADDRESS MANAGEMENT ============
-
   /// Add new address
   Future<bool> addAddress({
     required String fullName,
@@ -285,7 +283,4 @@ class UserProvider extends ChangeNotifier {
     _isLoading = false;
     notifyListeners();
   }
-
-  // ============ ADMIN FUNCTIONS ============
-  // (Optional - có thể thêm sau nếu cần quản lý users cho admin)
 }

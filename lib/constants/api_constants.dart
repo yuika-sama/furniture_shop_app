@@ -1,6 +1,6 @@
 // Constants
 class ApiConstants {
-  // Base URL - có thể đổi thành local hoặc production
+  // Base URL
   static const String baseUrl = 'https://furniture-shop-backend.vercel.app';
   static const String localUrl = 'http://localhost:5000';
   

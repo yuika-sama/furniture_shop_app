@@ -26,8 +26,8 @@ class _ProductNativeARPageState extends State<ProductNativeARPage> {
   bool _isDownloading = true;
   bool _hasError = false;
   String? _errorMessage;
-  String? _localModelPath; // Đường dẫn file trên máy
-  String? _remoteModelUrl; // Đường dẫn gốc
+  String? _localModelPath;
+  String? _remoteModelUrl;
   double _downloadProgress = 0.0;
   String _loadingStatus = 'Đang kiểm tra dữ liệu...';
 
@@ -39,7 +39,6 @@ class _ProductNativeARPageState extends State<ProductNativeARPage> {
     _initializeModel();
   }
 
-  // --- LOGIC TẢI VÀ CACHE (Tương tự Product3DViewerPage) ---
   Future<void> _initializeModel() async {
     try {
       // 1. Validate URL
@@ -49,7 +48,7 @@ class _ProductNativeARPageState extends State<ProductNativeARPage> {
 
       String url = widget.product.model3DUrl!;
 
-      // 2. Xử lý URL (thêm domain nếu thiếu, chuyển https)
+      // 2. Xử lý URL
       if (!url.startsWith('http')) {
         url = _apiClient.getImageUrl(url);
       }
@@ -58,7 +57,7 @@ class _ProductNativeARPageState extends State<ProductNativeARPage> {
         url = url.replaceFirst('http://', 'https://');
       }
 
-      // 3. Clean URL (Xóa phần thừa sau .glb nếu có)
+      // 3. Clean URL
       int extensionIndex = url.indexOf('.glb');
       if (extensionIndex != -1) {
         url = url.substring(0, extensionIndex + 4);
@@ -151,7 +150,7 @@ class _ProductNativeARPageState extends State<ProductNativeARPage> {
           else if (_localModelPath != null)
               _buildARViewer(),
 
-          // 2. Layer hướng dẫn (chỉ hiện khi đã tải xong)
+          // 2. Layer hướng dẫn
           if (!_isDownloading && !_hasError)
             Positioned(
               bottom: 40,
@@ -174,7 +173,6 @@ class _ProductNativeARPageState extends State<ProductNativeARPage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Hiển thị ảnh sản phẩm mờ mờ làm nền loading
               if (widget.product.images.isNotEmpty)
                 Container(
                   height: 150,
@@ -240,7 +238,6 @@ class _ProductNativeARPageState extends State<ProductNativeARPage> {
     );
   }
 
-  // --- AR VIEWER CHÍNH (Sử dụng File Local) ---
   Widget _buildARViewer() {
     // Tạo đường dẫn file local
     final localFileUrl = 'file://$_localModelPath';
@@ -259,9 +256,9 @@ class _ProductNativeARPageState extends State<ProductNativeARPage> {
       alt: widget.product.name,
       poster: posterUrl,
 
-      // Cấu hình AR - QUAN TRỌNG ĐỂ ĐẶT ĐỒ NỘI THẤT
+      // Cấu hình AR
       ar: true,
-      arModes: const ['scene-viewer', 'webxr', 'quick-look'], // Ưu tiên SceneViewer (Native Android)
+      arModes: const ['scene-viewer', 'webxr', 'quick-look'], // Ưu tiên SceneViewer
       arPlacement: ArPlacement.floor, // Bắt buộc: Đặt xuống sàn
       arScale: ArScale.auto, // Tỉ lệ thực 1:1
 
@@ -269,14 +266,12 @@ class _ProductNativeARPageState extends State<ProductNativeARPage> {
       cameraControls: true,
       autoRotate: true,
 
-      // iOS Setup (Dùng file local cho QuickLook)
+      // iOS Setup
       iosSrc: localFileUrl,
 
-      // UI Tùy chỉnh
       backgroundColor: Colors.white,
       loading: Loading.eager,
 
-      // CSS để Custom nút bấm AR
       relatedCss: '''
         model-viewer > button[slot="ar-button"] {
           background-color: #FF9800;

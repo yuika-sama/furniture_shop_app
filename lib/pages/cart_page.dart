@@ -728,44 +728,6 @@ class _CartPageState extends State<CartPage> {
     );
   }
 
-  Widget _buildCheckoutInfoSection(
-    String title,
-    IconData icon,
-    String content, {
-    required VoidCallback onEdit,
-  }) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(icon, size: 20, color: AppTheme.primary500),
-                const SizedBox(width: 8),
-                Text(
-                  title,
-                  style: Theme.of(context).textTheme.titleSmall,
-                ),
-                const Spacer(),
-                TextButton(
-                  onPressed: onEdit,
-                  child: const Text('Sửa'),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              content,
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   void _proceedToPayment() {
     final cartProvider = context.read<CartProvider>();
     
@@ -894,7 +856,6 @@ class _CartPageState extends State<CartPage> {
                   itemCount: _addresses.length,
                   itemBuilder: (context, index) {
                     final address = _addresses[index];
-                    final isSelected = _selectedAddress?['_id'] == address['_id'];
                     
                     return ListTile(
                       leading: Radio<String>(

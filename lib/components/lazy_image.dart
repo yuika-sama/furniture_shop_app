@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../constants/app_theme.dart';
 
-/// Lazy loading image component with placeholder and error handling
+/// Lazy loading image
 class LazyImage extends StatelessWidget {
   final String imageUrl;
   final double? width;

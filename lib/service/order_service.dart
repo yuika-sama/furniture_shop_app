@@ -141,8 +141,6 @@ class OrderService {
   }
 
   /// [GET] /api/orders/:id - Lấy chi tiết đơn hàng theo ID
-  /// 
-  /// Note: Chỉ user sở hữu hoặc admin mới xem được
   Future<Map<String, dynamic>> getOrderById(String orderId) async {
     try {
       final response = await _apiClient.dio.get('/api/orders/$orderId');
@@ -170,8 +168,6 @@ class OrderService {
   }
 
   /// [GET] /api/orders/code/:code - Tra cứu đơn hàng theo mã (PUBLIC, không cần auth)
-  /// 
-  /// Note: Route này public, dùng cho tracking đơn hàng
   Future<Map<String, dynamic>> getOrderByCode(String code) async {
     try {
       final response = await _apiClient.dio.get('/api/orders/code/$code');

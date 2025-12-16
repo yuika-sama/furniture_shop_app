@@ -443,7 +443,7 @@ class _OrdersPageState extends State<OrdersPage> with SingleTickerProviderStateM
                     isTotal: true,
                   ),
                   
-                  // Cancel button (if applicable)
+                  // Cancel button
                   if (order.status == OrderStatus.pending || order.status == OrderStatus.processing) ...[
                     const SizedBox(height: 24),
                     SizedBox(

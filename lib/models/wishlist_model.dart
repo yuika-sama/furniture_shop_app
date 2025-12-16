@@ -61,7 +61,7 @@ class WishlistModel {
     return products.fold(0.0, (sum, product) => sum + product.finalPrice);
   }
 
-  /// Total original value (before discount)
+  /// Total original value
   double get totalOriginalValue {
     return products.fold(0.0, (sum, product) => sum + product.price);
   }

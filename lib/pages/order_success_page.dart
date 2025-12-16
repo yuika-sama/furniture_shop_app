@@ -110,7 +110,6 @@ class OrderSuccessPage extends StatelessWidget {
                 width: double.infinity,
                 child: OutlinedButton.icon(
                   onPressed: () {
-                    // TODO: Navigate to order history page
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text('Tính năng xem đơn hàng sẽ được cập nhật sau'),

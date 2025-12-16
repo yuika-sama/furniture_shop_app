@@ -1,13 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-// import '../constants/app_theme.dart';
-import '../providers/user_provider.dart';
 import '../providers/auth_provider.dart';
 import '../pages/search_page.dart';
 import '../pages/cart_page.dart';
 import '../pages/wishlist_page.dart';
 import '../pages/login_page.dart';
-import '../pages/account_page.dart';
 
 /// Common actions for app bar (search, wishlist, cart, user)
 class CommonAppBarActions extends StatelessWidget {
@@ -60,33 +57,10 @@ class CommonAppBarActions extends StatelessWidget {
           ),
         if (additionalActions != null) ...additionalActions!,
         const CartIconWithBadge(),
-        // const UserMenuButton(),
       ],
     );
   }
 }
-
-/// User menu button with dropdown
-// class UserMenuButton extends StatelessWidget {
-//   const UserMenuButton({super.key});
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Consumer<UserProvider>(
-//       builder: (context, userProvider, child) {
-//         return IconButton(
-//           icon: const Icon(Icons.person_outline),
-//           onPressed: () {
-//             Navigator.push(
-//               context,
-//               MaterialPageRoute(builder: (context) => const AccountPage()),
-//             );
-//           },
-//         );
-//       },
-//     );
-//   }
-// }
 
 /// Cart icon with badge showing item count
 class CartIconWithBadge extends StatelessWidget {
