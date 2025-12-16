@@ -4,6 +4,7 @@ import '../constants/app_theme.dart';
 import '../providers/wishlist_provider.dart';
 import '../providers/cart_provider.dart';
 import '../components/product_card.dart';
+import 'product_detail_page.dart';
 
 class WishlistPage extends StatefulWidget {
   const WishlistPage({super.key});
@@ -112,8 +113,12 @@ class _WishlistPageState extends State<WishlistPage> {
                         isFavorite: true,
                         model3DUrl: product.model3DUrl,
                         onTap: () {
-                          // TODO: Navigate to product detail
-                          debugPrint('Tapped on: ${product.name}');
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ProductDetailPage(productSlug: product.slug),
+                            ),
+                          );
                         },
                         onAddToCart: () => _addToCart(product.id),
                         onToggleFavorite: () => _removeFromWishlist(product.id),
