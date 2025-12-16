@@ -6,6 +6,7 @@ import '../providers/auth_provider.dart';
 import '../pages/login_page.dart';
 import 'product_detail_page.dart';
 import 'checkout_payment_page.dart';
+import 'address_management_page.dart';
 import '../service/address_service.dart';
 import '../service/api_client.dart';
 
@@ -936,15 +937,22 @@ class _CartPageState extends State<CartPage> {
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton.icon(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    // TODO: Navigate to add address page
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Tính năng thêm địa chỉ sẽ được cập nhật sau'),
-                        behavior: SnackBarBehavior.floating,
+                  onPressed: () async {
+                    Navigator.pop(context); // Đóng bottom sheet
+                    // Navigate to AddressManagementPage
+                    await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const AddressManagementPage(),
                       ),
                     );
+                    // Reload addresses after returning
+                    if (mounted) {
+                      await _loadAddresses();
+                      setModalState(() {
+                        // Update modal state if needed
+                      });
+                    }
                   },
                   icon: const Icon(Icons.add),
                   label: const Text('Thêm địa chỉ mới'),

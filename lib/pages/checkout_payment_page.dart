@@ -4,6 +4,10 @@ import '../constants/app_theme.dart';
 import '../providers/order_provider.dart';
 import '../providers/cart_provider.dart';
 import '../models/order_model.dart';
+import '../models/user_model.dart';
+import '../service/user_service.dart';
+import '../service/api_client.dart';
+import 'address_management_page.dart';
 import 'order_success_page.dart';
 
 class CheckoutPaymentPage extends StatefulWidget {
@@ -23,12 +27,20 @@ class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
   late TextEditingController _noteController;
   bool _isPaymentConfirmed = false;
   bool _isProcessing = false;
+  
+  // Address management
+  late final UserService _userService;
+  List<AddressModel> _addresses = [];
+  AddressModel? _selectedAddress;
+  bool _isLoadingAddresses = false;
 
   @override
   void initState() {
     super.initState();
     _paymentMethod = widget.orderData['paymentMethod'] ?? 'COD';
     _noteController = TextEditingController(text: widget.orderData['note'] ?? '');
+    _userService = UserService(ApiClient());
+    _loadAddresses();
   }
 
   @override
@@ -52,6 +64,8 @@ class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  _buildAddressSection(),
+                  const SizedBox(height: 16),
                   _buildPaymentMethodSection(),
                   const SizedBox(height: 16),
                   _buildNoteSection(),
@@ -69,6 +83,382 @@ class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
         ],
       ),
     );
+  }
+
+  // Load danh sách địa chỉ
+  Future<void> _loadAddresses() async {
+    setState(() => _isLoadingAddresses = true);
+    try {
+      final addresses = await _userService.getAddresses();
+      if (mounted) {
+        setState(() {
+          _addresses = addresses;
+          _isLoadingAddresses = false;
+          // Tự động chọn địa chỉ mặc định nếu có
+          if (_selectedAddress == null && _addresses.isNotEmpty) {
+            _selectedAddress = _addresses.firstWhere(
+              (addr) => addr.isDefault,
+              orElse: () => _addresses.first,
+            );
+          }
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoadingAddresses = false);
+        debugPrint('Error loading addresses: $e');
+      }
+    }
+  }
+
+  Widget _buildAddressSection() {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.location_on, size: 20, color: AppTheme.primary500),
+                const SizedBox(width: 8),
+                Text(
+                  'Địa chỉ giao hàng',
+                  style: Theme.of(context).textTheme.titleSmall,
+                ),
+                const Spacer(),
+                TextButton.icon(
+                  onPressed: () async {
+                    // Navigate to AddressManagementPage
+                    await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const AddressManagementPage(),
+                      ),
+                    );
+                    // Reload addresses after returning
+                    if (mounted) {
+                      await _loadAddresses();
+                    }
+                  },
+                  icon: const Icon(Icons.add, size: 18),
+                  label: const Text('Thêm mới'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppTheme.primary500,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            if (_isLoadingAddresses)
+              const Center(child: CircularProgressIndicator())
+            else if (_addresses.isEmpty)
+              _buildNoAddressWidget()
+            else
+              _buildAddressSelector(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNoAddressWidget() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppTheme.beige50,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppTheme.char300),
+      ),
+      child: Column(
+        children: [
+          Icon(Icons.location_off, size: 40, color: AppTheme.char400),
+          const SizedBox(height: 8),
+          Text(
+            'Chưa có địa chỉ giao hàng',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: AppTheme.char600,
+                ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Vui lòng thêm địa chỉ để tiếp tục',
+            style: TextStyle(fontSize: 12, color: AppTheme.char500),
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton.icon(
+            onPressed: () async {
+              await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const AddressManagementPage(),
+                ),
+              );
+              if (mounted) {
+                await _loadAddresses();
+              }
+            },
+            icon: const Icon(Icons.add),
+            label: const Text('Thêm địa chỉ'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAddressSelector() {
+    return Column(
+      children: _addresses.map((address) {
+        final isSelected = _selectedAddress?.id == address.id;
+        return InkWell(
+          onTap: () {
+            setState(() => _selectedAddress = address);
+          },
+          borderRadius: BorderRadius.circular(8),
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: isSelected ? AppTheme.primary100 : Colors.white,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: isSelected ? AppTheme.primary500 : AppTheme.char300,
+                width: isSelected ? 2 : 1,
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  isSelected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
+                  color: isSelected ? AppTheme.primary500 : AppTheme.char400,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            address.fullName ?? '',
+                            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                          ),
+                          const SizedBox(width: 4),
+                          Text('|', style: TextStyle(color: AppTheme.char400)),
+                          const SizedBox(width: 4),
+                          Text(
+                            address.phone ?? '',
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                          if (address.isDefault) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppTheme.primary500,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                'Mặc định',
+                                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                      color: Colors.white,
+                                      fontSize: 10,
+                                    ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${address.address}, ${address.ward}, ${address.district}, ${address.province}',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: AppTheme.char600,
+                            ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  void _showAddAddressDialog() {
+    final fullNameController = TextEditingController();
+    final phoneController = TextEditingController();
+    final provinceController = TextEditingController();
+    final districtController = TextEditingController();
+    final wardController = TextEditingController();
+    final addressController = TextEditingController();
+    bool isDefault = _addresses.isEmpty; // Tự động đặt làm mặc định nếu chưa có địa chỉ nào
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text('Thêm địa chỉ mới'),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: fullNameController,
+                      decoration: const InputDecoration(
+                        labelText: 'Tên người nhận',
+                        prefixIcon: Icon(Icons.person),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: phoneController,
+                      decoration: const InputDecoration(
+                        labelText: 'Số điện thoại',
+                        prefixIcon: Icon(Icons.phone),
+                      ),
+                      keyboardType: TextInputType.phone,
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: provinceController,
+                      decoration: const InputDecoration(
+                        labelText: 'Tỉnh/Thành phố',
+                        prefixIcon: Icon(Icons.location_city),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: districtController,
+                      decoration: const InputDecoration(
+                        labelText: 'Quận/Huyện',
+                        prefixIcon: Icon(Icons.location_city),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: wardController,
+                      decoration: const InputDecoration(
+                        labelText: 'Phường/Xã',
+                        prefixIcon: Icon(Icons.location_city),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: addressController,
+                      decoration: const InputDecoration(
+                        labelText: 'Địa chỉ cụ thể',
+                        prefixIcon: Icon(Icons.home),
+                      ),
+                      maxLines: 2,
+                    ),
+                    const SizedBox(height: 16),
+                    CheckboxListTile(
+                      title: const Text('Đặt làm địa chỉ mặc định'),
+                      value: isDefault,
+                      onChanged: (value) {
+                        setDialogState(() => isDefault = value ?? false);
+                      },
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Hủy'),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    if (fullNameController.text.trim().isEmpty ||
+                        phoneController.text.trim().isEmpty ||
+                        provinceController.text.trim().isEmpty ||
+                        districtController.text.trim().isEmpty ||
+                        wardController.text.trim().isEmpty ||
+                        addressController.text.trim().isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Vui lòng điền đầy đủ thông tin'),
+                          backgroundColor: AppTheme.error,
+                        ),
+                      );
+                      return;
+                    }
+
+                    await _handleAddAddress(
+                      fullNameController.text.trim(),
+                      phoneController.text.trim(),
+                      provinceController.text.trim(),
+                      districtController.text.trim(),
+                      wardController.text.trim(),
+                      addressController.text.trim(),
+                      isDefault,
+                    );
+                    if (mounted) Navigator.pop(context);
+                  },
+                  child: const Text('Thêm'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _handleAddAddress(
+    String fullName,
+    String phone,
+    String province,
+    String district,
+    String ward,
+    String address,
+    bool isDefault,
+  ) async {
+    try {
+      await _userService.addAddress(
+        fullName: fullName,
+        phone: phone,
+        province: province,
+        district: district,
+        ward: ward,
+        address: address,
+        isDefault: isDefault,
+      );
+
+      if (mounted) {
+        await _loadAddresses();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Thêm địa chỉ thành công'),
+            backgroundColor: AppTheme.success,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Lỗi: ${e.toString()}'),
+            backgroundColor: AppTheme.error,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
   }
 
   Widget _buildPaymentMethodSection() {
@@ -498,6 +888,7 @@ class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
 
   bool _canPlaceOrder() {
     if (_isProcessing) return false;
+    if (_selectedAddress == null) return false; // Phải chọn địa chỉ
     if (_paymentMethod == 'QR' && !_isPaymentConfirmed) return false;
     return true;
   }
@@ -533,21 +924,12 @@ class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
       final orderProvider = context.read<OrderProvider>();
       final cartProvider = context.read<CartProvider>();
       
-      // Lấy thông tin địa chỉ từ orderData
-      final addressData = widget.orderData['address'];
-      
-      // Validate địa chỉ
-      if (addressData == null ||
-          addressData['fullName'] == null ||
-          addressData['phone'] == null ||
-          addressData['province'] == null ||
-          addressData['district'] == null ||
-          addressData['ward'] == null ||
-          addressData['address'] == null) {
+      // Validate địa chỉ đã chọn
+      if (_selectedAddress == null) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Thông tin địa chỉ không đầy đủ'),
+              content: Text('Vui lòng chọn địa chỉ giao hàng'),
               backgroundColor: AppTheme.error,
               behavior: SnackBarBehavior.floating,
             ),
@@ -559,14 +941,14 @@ class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
         return;
       }
       
-      // Tạo ShippingAddress object
+      // Tạo ShippingAddress object từ selected address
       final shippingAddress = ShippingAddress(
-        fullName: addressData['fullName'] as String,
-        phone: addressData['phone'] as String,
-        province: addressData['province'] as String,
-        district: addressData['district'] as String,
-        ward: addressData['ward'] as String,
-        address: addressData['address'] as String,
+        fullName: _selectedAddress!.fullName ?? '',
+        phone: _selectedAddress!.phone ?? '',
+        province: _selectedAddress!.province ?? '',
+        district: _selectedAddress!.district ?? '',
+        ward: _selectedAddress!.ward ?? '',
+        address: _selectedAddress!.address ?? '',
       );
       
       // Convert payment method string to enum
