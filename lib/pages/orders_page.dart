@@ -4,6 +4,7 @@ import '../constants/app_theme.dart';
 import '../providers/order_provider.dart';
 import '../models/order_model.dart';
 import 'package:intl/intl.dart';
+import './main_scaffold.dart';
 
 class OrdersPage extends StatefulWidget {
   const OrdersPage({super.key});
@@ -40,6 +41,15 @@ class _OrdersPageState extends State<OrdersPage> with SingleTickerProviderStateM
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(builder: (context) => const MainScaffold()),
+              (route) => false,
+            );
+          },
+        ),
         centerTitle: false,
         title: const Text('Đơn hàng của tôi'),
         bottom: TabBar(
