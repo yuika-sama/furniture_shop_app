@@ -450,87 +450,192 @@ class _AccountPageState extends State<AccountPage> {
       context: context,
       isScrollControlled: true,
       builder: (context) {
-        return Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom,
-          ),
-          child: Container(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Đổi mật khẩu',
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-                const SizedBox(height: 24),
-                TextField(
-                  controller: currentPasswordController,
-                  obscureText: true,
-                  decoration: const InputDecoration(
-                    labelText: 'Mật khẩu hiện tại',
-                    prefixIcon: Icon(Icons.lock),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: newPasswordController,
-                  obscureText: true,
-                  decoration: const InputDecoration(
-                    labelText: 'Mật khẩu mới',
-                    prefixIcon: Icon(Icons.lock),
-                    helperText: 'Ít nhất 6 ký tự',
-                  ),
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: confirmPasswordController,
-                  obscureText: true,
-                  decoration: const InputDecoration(
-                    labelText: 'Xác nhận mật khẩu mới',
-                    prefixIcon: Icon(Icons.lock),
-                  ),
-                ),
-                const SizedBox(height: 24),
-                Row(
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            bool showCurrentPassword = false;
+            bool showNewPassword = false;
+            bool showConfirmPassword = false;
+            bool isLoading = false;
+
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
+              ),
+              child: Container(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () => Navigator.pop(context),
-                        child: const Text('Hủy'),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () async {
-                          if (newPasswordController.text != confirmPasswordController.text) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Mật khẩu xác nhận không khớp'),
-                                backgroundColor: AppTheme.error,
-                                behavior: SnackBarBehavior.floating,
+                    Row(
+                      children: [
+                        Icon(Icons.lock_outline, color: AppTheme.primary500),
+                        const SizedBox(width: 12),
+                        Text(
+                          'Đổi mật khẩu',
+                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                fontWeight: FontWeight.bold,
                               ),
-                            );
-                            return;
-                          }
-                          await _handleChangePassword(
-                            currentPasswordController.text,
-                            newPasswordController.text,
-                          );
-                          if (mounted) Navigator.pop(context);
-                        },
-                        child: const Text('Đổi mật khẩu'),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    TextField(
+                      controller: currentPasswordController,
+                      obscureText: !showCurrentPassword,
+                      decoration: InputDecoration(
+                        labelText: 'Mật khẩu hiện tại',
+                        prefixIcon: const Icon(Icons.lock),
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            showCurrentPassword
+                                ? Icons.visibility_off
+                                : Icons.visibility,
+                          ),
+                          onPressed: () {
+                            setModalState(() {
+                              showCurrentPassword = !showCurrentPassword;
+                            });
+                          },
+                        ),
                       ),
                     ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: newPasswordController,
+                      obscureText: !showNewPassword,
+                      decoration: InputDecoration(
+                        labelText: 'Mật khẩu mới',
+                        prefixIcon: const Icon(Icons.lock_open),
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            showNewPassword
+                                ? Icons.visibility_off
+                                : Icons.visibility,
+                          ),
+                          onPressed: () {
+                            setModalState(() {
+                              showNewPassword = !showNewPassword;
+                            });
+                          },
+                        ),
+                        helperText: 'Ít nhất 6 ký tự',
+                        helperStyle: TextStyle(color: AppTheme.char500),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: confirmPasswordController,
+                      obscureText: !showConfirmPassword,
+                      decoration: InputDecoration(
+                        labelText: 'Xác nhận mật khẩu mới',
+                        prefixIcon: const Icon(Icons.lock_clock),
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            showConfirmPassword
+                                ? Icons.visibility_off
+                                : Icons.visibility,
+                          ),
+                          onPressed: () {
+                            setModalState(() {
+                              showConfirmPassword = !showConfirmPassword;
+                            });
+                          },
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: isLoading ? null : () => Navigator.pop(context),
+                            child: const Text('Hủy'),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: isLoading
+                                ? null
+                                : () async {
+                                    // Validation
+                                    if (currentPasswordController.text.isEmpty) {
+                                      _showError('Vui lòng nhập mật khẩu hiện tại');
+                                      return;
+                                    }
+                                    
+                                    if (newPasswordController.text.isEmpty) {
+                                      _showError('Vui lòng nhập mật khẩu mới');
+                                      return;
+                                    }
+                                    
+                                    if (newPasswordController.text.length < 6) {
+                                      _showError('Mật khẩu mới phải có ít nhất 6 ký tự');
+                                      return;
+                                    }
+                                    
+                                    if (newPasswordController.text != confirmPasswordController.text) {
+                                      _showError('Mật khẩu xác nhận không khớp');
+                                      return;
+                                    }
+                                    
+                                    if (currentPasswordController.text == newPasswordController.text) {
+                                      _showError('Mật khẩu mới phải khác mật khẩu hiện tại');
+                                      return;
+                                    }
+
+                                    setModalState(() {
+                                      isLoading = true;
+                                    });
+
+                                    final success = await _handleChangePassword(
+                                      currentPasswordController.text,
+                                      newPasswordController.text,
+                                    );
+
+                                    if (mounted) {
+                                      if (success) {
+                                        Navigator.pop(context);
+                                      } else {
+                                        setModalState(() {
+                                          isLoading = false;
+                                        });
+                                      }
+                                    }
+                                  },
+                            child: isLoading
+                                ? const SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                    ),
+                                  )
+                                : const Text('Đổi mật khẩu'),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
                   ],
                 ),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         );
       },
+    );
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: AppTheme.error,
+        behavior: SnackBarBehavior.floating,
+      ),
     );
   }
 
@@ -641,7 +746,7 @@ class _AccountPageState extends State<AccountPage> {
     }
   }
 
-  Future<void> _handleChangePassword(String currentPassword, String newPassword) async {
+  Future<bool> _handleChangePassword(String currentPassword, String newPassword) async {
     try {
       await _userService.changePassword(
         currentPassword: currentPassword,
@@ -654,19 +759,32 @@ class _AccountPageState extends State<AccountPage> {
             content: Text('Đổi mật khẩu thành công'),
             backgroundColor: AppTheme.success,
             behavior: SnackBarBehavior.floating,
+            duration: Duration(seconds: 2),
           ),
         );
       }
+      return true;
     } catch (e) {
       if (mounted) {
+        String errorMessage = 'Lỗi: ${e.toString()}';
+        
+        // Parse error message for better UX
+        if (e.toString().contains('Current password is incorrect')) {
+          errorMessage = 'Mật khẩu hiện tại không đúng';
+        } else if (e.toString().contains('password')) {
+          errorMessage = 'Lỗi đổi mật khẩu. Vui lòng thử lại';
+        }
+        
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Lỗi: ${e.toString()}'),
+            content: Text(errorMessage),
             backgroundColor: AppTheme.error,
             behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 3),
           ),
         );
       }
+      return false;
     }
   }
 
