@@ -546,7 +546,7 @@ class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
               ),
             ],
             const SizedBox(height: 8),
-            _buildPriceRow('Phí vận chuyển', 'Miễn phí', color: AppTheme.success),
+            _buildPriceRow('Phí vận chuyển', '30000', color: AppTheme.success),
             const Divider(height: 24),
             _buildPriceRow(
               'Tổng thanh toán',

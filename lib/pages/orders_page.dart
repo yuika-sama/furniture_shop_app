@@ -433,7 +433,7 @@ class _OrdersPageState extends State<OrdersPage> with SingleTickerProviderStateM
                     ),
                   ],
                   const SizedBox(height: 8),
-                  _buildPriceRow('Phí vận chuyển', 'Miễn phí', color: AppTheme.success),
+                  _buildPriceRow('Phí vận chuyển', '30000', color: AppTheme.success),
                   const SizedBox(height: 16),
                   const Divider(),
                   const SizedBox(height: 16),

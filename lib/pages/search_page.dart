@@ -304,15 +304,6 @@ class _SearchPageState extends State<SearchPage> {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '${category.productCount} sản phẩm',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppTheme.char500,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
                 ],
               ),
             ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../constants/app_theme.dart';
-import 'home_page.dart';
+import 'main_scaffold.dart';
+import 'orders_page.dart';
 
 class OrderSuccessPage extends StatelessWidget {
   final Map<String, dynamic> orderData;
@@ -89,11 +90,11 @@ class OrderSuccessPage extends StatelessWidget {
                 width: double.infinity,
                 child: ElevatedButton.icon(
                   onPressed: () {
-                    // Navigate to home and clear all previous routes
+                    // Navigate to home with bottom bar and clear all previous routes
                     Navigator.pushAndRemoveUntil(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const HomePage(),
+                        builder: (context) => const MainScaffold(),
                       ),
                       (route) => false,
                     );
@@ -110,11 +111,12 @@ class OrderSuccessPage extends StatelessWidget {
                 width: double.infinity,
                 child: OutlinedButton.icon(
                   onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Tính năng xem đơn hàng sẽ được cập nhật sau'),
-                        behavior: SnackBarBehavior.floating,
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const OrdersPage(),
                       ),
+                      (route) => false,
                     );
                   },
                   icon: const Icon(Icons.receipt_long),
