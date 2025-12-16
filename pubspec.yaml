@@ -57,6 +57,7 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
+  flutter_native_splash: ^2.4.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -99,3 +100,36 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+# Flutter Native Splash Configuration
+flutter_native_splash:
+  # Background color (dùng màu primary của app - terracotta)
+  color: "#b06a4c"
+  
+  # Logo image
+  image: assets/Logo.png
+  
+  # Branding (logo nhỏ ở dưới cùng - optional)
+  # branding: assets/branding.png
+  
+  # Android specific
+  android: true
+  android_12:
+    background_image: assets/Logo.png
+    color: "#ffffff"
+  
+  # iOS specific  
+  ios: true
+  
+  # Web specific (optional)
+  web: false
+  
+  # Full screen (recommendation: false để tránh bị che bởi notch)
+  fullscreen: false
+  
+  # Android gravity (center, fill, clip_horizontal, clip_vertical)
+  android_gravity: center
+  
+  # iOS content mode (center, scaleAspectFit, scaleAspectFill, scaleToFill)
+  ios_content_mode: center
+

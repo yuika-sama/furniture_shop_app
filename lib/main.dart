@@ -29,12 +29,21 @@ import 'providers/wishlist_provider.dart';
 // Constants
 import 'constants/app_theme.dart';
 
+// Components
+import 'components/error_boundary.dart';
+
 // Pages
 import 'pages/main_scaffold.dart';
 import 'pages/search_page.dart';
 import 'pages/cart_page.dart';
 
 void main() {
+  // Bắt tất cả errors trong Flutter framework
+  FlutterError.onError = (FlutterErrorDetails details) {
+    FlutterError.presentError(details);
+    debugPrint('Flutter Error: ${details.exceptionAsString()}');
+  };
+
   runApp(const MyApp());
 }
 
@@ -45,7 +54,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        // ApiClient - single instance (will be configured after AuthProvider is created)
+        // ApiClient - single instance
         Provider(create: (_) => ApiClient()),
 
         // Services - inject ApiClient
@@ -83,14 +92,12 @@ class MyApp extends StatelessWidget {
           update: (_, apiClient, __) => WishlistService(apiClient),
         ),
 
-        // Providers - State Management (Order matters!)
-        // 1. AuthProvider must be first
+        // Providers - State Management
         ChangeNotifierProxyProvider<AuthService, AuthProvider>(
           create: (_) => AuthProvider(AuthService(ApiClient())),
           update: (_, service, previous) => previous ?? AuthProvider(service),
         ),
         
-        // 2. Independent providers
         ChangeNotifierProxyProvider<CategoryService, CategoryProvider>(
           create: (_) => CategoryProvider(categoryService: CategoryService(ApiClient())),
           update: (_, service, previous) => previous ?? CategoryProvider(categoryService: service),
@@ -121,7 +128,6 @@ class MyApp extends StatelessWidget {
               previous ?? OrderProvider(orderService: orderService),
         ),
         
-        // 3. CartProvider depends on AuthProvider (must come after AuthProvider)
         ChangeNotifierProxyProvider2<CartService, AuthProvider, CartProvider>(
           create: (_) => CartProvider(
             cartService: CartService(ApiClient()),
@@ -130,16 +136,48 @@ class MyApp extends StatelessWidget {
               previous ?? CartProvider(cartService: cartService, authProvider: authProvider),
         ),
       ],
-      child: MaterialApp(
-        title: 'Homi Furniture',
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.lightTheme,
-        initialRoute: '/',
-        routes: {
-          '/': (context) => const MainScaffold(),
-          '/search': (context) => const SearchPage(),
-          '/cart': (context) => const CartPage(),
-        },
+      child: ErrorBoundary(
+        child: Builder(
+          builder: (context) {
+            return MaterialApp(
+              title: 'Homi Furniture',
+              debugShowCheckedModeBanner: false,
+              theme: AppTheme.lightTheme,
+              initialRoute: '/',
+              routes: {
+                '/': (context) => const MainScaffold(),
+                '/search': (context) => const SearchPage(),
+                '/cart': (context) => const CartPage(),
+              },
+              // Error handling cho navigation
+              onUnknownRoute: (settings) {
+                return MaterialPageRoute(
+                  builder: (context) => ErrorBoundary.buildErrorScreen(
+                    context: context,
+                    title: 'Không tìm thấy trang',
+                    message: 'Trang "${settings.name}" không tồn tại',
+                    onRetry: () => Navigator.of(context).pushReplacementNamed('/'),
+                  ),
+                );
+              },
+              // Global error builder
+              builder: (context, widget) {
+                ErrorWidget.builder = (FlutterErrorDetails errorDetails) {
+                  return ErrorBoundary.buildErrorScreen(
+                    context: context,
+                    title: 'Lỗi ứng dụng',
+                    message: 'Đã xảy ra lỗi không mong muốn',
+                    onRetry: () {
+                      // Trigger rebuild
+                      (context as Element).markNeedsBuild();
+                    },
+                  );
+                };
+                return widget!;
+              },
+            );
+          },
+        ),
       ),
     );
   }

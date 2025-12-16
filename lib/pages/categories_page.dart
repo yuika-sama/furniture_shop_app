@@ -73,20 +73,12 @@ class _CategoriesPageState extends State<CategoriesPage>
         headerSliverBuilder: (context, innerBoxIsScrolled) {
           return [
             SliverAppBar(
-              title: const Text('Danh mục'),
+              title: const Text('Phân loại'),
               floating: true,
               snap: true,
               centerTitle: false,
               actions: [
-                CommonAppBarActions(
-                  showWishlist: false,
-                  additionalActions: [
-                    IconButton(
-                      icon: const Icon(Icons.filter_list),
-                      onPressed: _showFilterBottomSheet,
-                    ),
-                  ],
-                ),
+                CommonAppBarActions(),
               ],
               bottom: TabBar(
                 controller: _tabController,
@@ -94,7 +86,7 @@ class _CategoriesPageState extends State<CategoriesPage>
                 unselectedLabelColor: Colors.white,
                 tabs: const [
                   Tab(text: 'Theo phòng'),
-                  Tab(text: 'Theo loại'),
+                  Tab(text: 'Theo danh mục'),
                   Tab(text:' Theo thương hiệu')
                 ],
               ),
