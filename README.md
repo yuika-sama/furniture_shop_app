@@ -133,8 +133,8 @@ flutter pub get
 
 3. **Cấu hình API endpoint**
 
-    - Cập nhật API base URL trong file service configuration
-    - Chi tiết Project backend: [Link](https://github.com/yuika-sama/furniture-shop-backend)
+   - Cập nhật API base URL trong file service configuration
+   - Chi tiết Project backend: [Link](https://github.com/yuika-sama/furniture-shop-backend)
 4. **Chạy ứng dụng**
 
 ```bash
@@ -231,11 +231,13 @@ Copyright © 2026. All rights reserved.
 
 ## 👥 Tác giả
 
-_(Thêm thông tin tác giả tại đây)_
+_Yuika-sama(App Development)_
+
+*Phạm Hà Thắng(Backend & Web Development)*
 
 ## 📞 Liên hệ
 
-_(Thêm thông tin liên hệ tại đây)_
+_nguyenanhduc2938@gmail.com_
 
 ---
 
