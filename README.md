@@ -9,12 +9,14 @@ Furniture Shop App là một ứng dụng thương mại điện tử chuyên v�
 ## ✨ Tính năng chính
 
 ### 🔐 Xác thực & Quản lý người dùng
+
 - Đăng ký và đăng nhập tài khoản
 - Quên mật khẩu và khôi phục
 - Quản lý thông tin cá nhân
 - Quản lý địa chỉ giao hàng
 
 ### 🛍️ Mua sắm
+
 - Duyệt sản phẩm theo danh mục và thương hiệu
 - Tìm kiếm sản phẩm
 - Xem chi tiết sản phẩm với hình ảnh và mô tả
@@ -23,20 +25,24 @@ Furniture Shop App là một ứng dụng thương mại điện tử chuyên v�
 - Xem sản phẩm trong AR (Augmented Reality)
 
 ### 🛒 Giỏ hàng & Thanh toán
+
 - Thêm/xóa/cập nhật sản phẩm trong giỏ hàng
 - Áp dụng mã khuyến mãi
 - Thanh toán và tạo đơn hàng
 - Theo dõi trạng thái đơn hàng
 
 ### ❤️ Yêu thích
+
 - Thêm sản phẩm vào danh sách yêu thích
 - Quản lý danh sách yêu thích
 
 ### 🤖 Chatbot AI
+
 - Hỗ trợ tư vấn sản phẩm thông qua Google Generative AI
 - Trả lời câu hỏi về nội thất
 
 ### 🎁 Khuyến mãi
+
 - Xem danh sách chương trình khuyến mãi
 - Áp dụng mã giảm giá
 
@@ -92,9 +98,11 @@ lib/
 ```
 
 ### State Management
+
 - **Provider**: Quản lý state toàn cục cho authentication, cart, products, orders, etc.
 
 ### Network Layer
+
 - **Dio**: HTTP client cho các API calls
 - **API Client**: Centralized API configuration với interceptors
 - **Secure Storage**: Lưu trữ token authentication an toàn
@@ -102,6 +110,7 @@ lib/
 ## 🚀 Cài đặt
 
 ### Yêu cầu
+
 - Flutter SDK: ^3.10.3
 - Dart SDK: ^3.10.3
 - Android Studio / Xcode (cho phát triển mobile)
@@ -110,20 +119,24 @@ lib/
 ### Các bước cài đặt
 
 1. **Clone repository**
+
 ```bash
 git clone <repository-url>
 cd furniture_shop_app
 ```
 
 2. **Cài đặt dependencies**
+
 ```bash
 flutter pub get
 ```
 
 3. **Cấu hình API endpoint**
-   - Cập nhật API base URL trong file service configuration
 
+   - Cập nhật API base URL trong file service configuration
+   - Chi tiết Project backend: [Link](https://github.com/yuika-sama/furniture-shop-backend)
 4. **Chạy ứng dụng**
+
 ```bash
 # Chạy trên simulator/emulator
 flutter run
@@ -139,49 +152,59 @@ flutter build ios  # iOS
 ## 📦 Dependencies chính
 
 ### Core
+
 - `flutter`: SDK
 - `provider: ^6.1.2`: State management
 - `dio: ^5.9.0`: HTTP client
 
 ### UI/UX
+
 - `cupertino_icons: ^1.0.8`: Icons
 - `model_viewer_plus: ^1.8.0`: 3D model viewer
 - `image_picker: ^1.0.7`: Chọn hình ảnh
 
 ### Storage & Security
+
 - `flutter_secure_storage: ^10.0.0`: Secure storage cho tokens
 - `shared_preferences: ^2.3.3`: Local preferences
 - `path_provider: ^2.1.5`: File system paths
 
 ### AI & Integration
+
 - `google_generative_ai: 0.4.6`: Gemini AI chatbot
 - `url_launcher: ^6.2.4`: Mở URLs
 - `open_file: ^3.3.2`: Mở files
 
 ### Utilities
+
 - `permission_handler: ^11.0.0`: Quản lý permissions
 - `intl: ^0.20.2`: Internationalization
 
 ## 🔧 Cấu hình
 
 ### Android
+
 - Minimum SDK: 21
 - Target SDK: 34
 - Cấu hình permissions trong `AndroidManifest.xml`
 
 ### iOS
+
 - Minimum iOS version: 12.0
 - Cấu hình permissions trong `Info.plist`
 
 ## 🎨 Features nổi bật
 
 ### 3D & AR Viewer
+
 Sử dụng `model_viewer_plus` để hiển thị sản phẩm dưới dạng 3D và AR, cho phép khách hàng xem sản phẩm một cách sinh động trước khi mua.
 
 ### AI Chatbot
+
 Tích hợp Google Gemini AI để cung cấp chatbot tư vấn thông minh, giúp khách hàng tìm hiểu về sản phẩm nội thất.
 
 ### Secure Authentication
+
 Sử dụng `flutter_secure_storage` để lưu trữ token authentication một cách an toàn, kết hợp với API interceptors để tự động refresh token.
 
 ## 🧪 Testing
