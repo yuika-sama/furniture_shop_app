@@ -1,230 +1,242 @@
-# Homi - Furniture Shop App
+# 🛋️ Furniture Shop App
 
-Ứng dụng mua sắm nội thất trực tuyến - BTL cuối kỳ môn Lập Trình Ứng Dụng Di Động
+Ứng dụng bán hàng nội thất được xây dựng bằng Flutter - BTL cuối kỳ LTApp
 
-## Giới thiệu
+## 📋 Mô tả
 
-Furniture Shop App là ứng dụng di động được xây dựng bằng Flutter, cho phép người dùng duyệt, tìm kiếm và mua sắm các sản phẩm nội thất một cách thuận tiện. Ứng dụng tích hợp AI chatbot hỗ trợ tư vấn sản phẩm thông minh.
+Furniture Shop App là một ứng dụng thương mại điện tử chuyên về nội thất, cung cấp trải nghiệm mua sắm toàn diện với các tính năng hiện đại như xem sản phẩm 3D/AR, chatbot hỗ trợ AI, và quản lý đơn hàng.
 
-## Tính năng chính
+## ✨ Tính năng chính
 
-### Xác thực & Tài khoản
+### 🔐 Xác thực & Quản lý người dùng
 
-- Đăng ký/Đăng nhập tài khoản
-- Quên mật khẩu (gửi email reset)
-- Đổi mật khẩu
+- Đăng ký và đăng nhập tài khoản
+- Quên mật khẩu và khôi phục
 - Quản lý thông tin cá nhân
 - Quản lý địa chỉ giao hàng
 
-### Mua sắm
+### 🛍️ Mua sắm
 
-- Duyệt sản phẩm theo danh mục
+- Duyệt sản phẩm theo danh mục và thương hiệu
 - Tìm kiếm sản phẩm
-- Xem chi tiết sản phẩm với hình ảnh, mô tả, đánh giá
-- Thêm sản phẩm vào giỏ hàng
-- Quản lý giỏ hàng (tăng/giảm số lượng, xóa sản phẩm)
+- Xem chi tiết sản phẩm với hình ảnh và mô tả
+- Đánh giá và nhận xét sản phẩm
+- Xem sản phẩm dưới dạng 3D (Model Viewer)
+- Xem sản phẩm trong AR (Augmented Reality)
+
+### 🛒 Giỏ hàng & Thanh toán
+
+- Thêm/xóa/cập nhật sản phẩm trong giỏ hàng
+- Áp dụng mã khuyến mãi
+- Thanh toán và tạo đơn hàng
+- Theo dõi trạng thái đơn hàng
+
+### ❤️ Yêu thích
+
+- Thêm sản phẩm vào danh sách yêu thích
+- Quản lý danh sách yêu thích
+
+### 🤖 Chatbot AI
+
+- Hỗ trợ tư vấn sản phẩm thông qua Google Generative AI
+- Trả lời câu hỏi về nội thất
+
+### 🎁 Khuyến mãi
+
+- Xem danh sách chương trình khuyến mãi
 - Áp dụng mã giảm giá
-- Đặt hàng với phương thức COD
 
-### Yêu thích
+## 🏗️ Kiến trúc ứng dụng
 
-- Thêm/xóa sản phẩm khỏi danh sách yêu thích
-- Xem danh sách sản phẩm yêu thích
-- Thêm nhanh từ wishlist vào giỏ hàng
+### Cấu trúc thư mục
 
-### Đơn hàng
+```
+lib/
+├── main.dart                 # Entry point
+├── components/              # Các widget tái sử dụng
+├── constants/               # Hằng số và theme
+├── models/                  # Data models
+│   ├── brand_model.dart
+│   ├── cart_model.dart
+│   ├── category_model.dart
+│   ├── order_model.dart
+│   ├── product_model.dart
+│   ├── promotion_model.dart
+│   ├── review_model.dart
+│   ├── user_model.dart
+│   └── wishlist_model.dart
+├── pages/                   # Các màn hình
+│   ├── home_page.dart
+│   ├── login_page.dart
+│   ├── register_page.dart
+│   ├── products_page.dart
+│   ├── product_detail_page.dart
+│   ├── product_3d_viewer_page.dart
+│   ├── product_ar_viewer_page.dart
+│   ├── cart_page.dart
+│   ├── checkout_payment_page.dart
+│   ├── orders_page.dart
+│   ├── wishlist_page.dart
+│   ├── account_page.dart
+│   ├── chatbot_page.dart
+│   └── ...
+├── providers/               # State management (Provider)
+│   ├── auth_provider.dart
+│   ├── cart_provider.dart
+│   ├── product_provider.dart
+│   ├── order_provider.dart
+│   └── ...
+├── service/                 # API services
+│   ├── api_client.dart
+│   ├── auth_service.dart
+│   ├── product_service.dart
+│   ├── cart_service.dart
+│   ├── chat_service.dart
+│   └── ...
+└── utils/                   # Tiện ích
 
-- Xem lịch sử đơn hàng
-- Theo dõi trạng thái đơn hàng (Chờ xử lý, Đang xử lý, Đang giao, Hoàn thành)
-- Xem chi tiết đơn hàng
-- Hủy đơn hàng (nếu chưa xử lý)
+```
 
-### Khuyến mãi
+### State Management
 
-- Xem danh sách khuyến mãi
-- Copy mã giảm giá vào clipboard
-- Áp dụng mã giảm giá khi thanh toán
+- **Provider**: Quản lý state toàn cục cho authentication, cart, products, orders, etc.
 
-### AI Chatbot
+### Network Layer
 
-- Tư vấn sản phẩm thông minh với Google Gemini AI
-- Trả lời câu hỏi về sản phẩm
-- Gợi ý sản phẩm phù hợp
+- **Dio**: HTTP client cho các API calls
+- **API Client**: Centralized API configuration với interceptors
+- **Secure Storage**: Lưu trữ token authentication an toàn
 
-### Đánh giá & Nhận xét
-
-- Xem đánh giá sản phẩm từ người dùng khác
-- Viết đánh giá cho sản phẩm đã mua(On update)
-- Xếp hạng sản phẩm (1-5 sao)(On update)
-
-## Cài đặt
+## 🚀 Cài đặt
 
 ### Yêu cầu
 
-- Flutter SDK 3.5.4 trở lên
-- Dart 3.5.4 trở lên
-- Android Studio / Xcode (cho build Android/iOS)
-- Git
+- Flutter SDK: ^3.10.3
+- Dart SDK: ^3.10.3
+- Android Studio / Xcode (cho phát triển mobile)
+- VS Code (khuyên dùng)
 
-### Bước 1: Clone repository
+### Các bước cài đặt
+
+1. **Clone repository**
 
 ```bash
 git clone <repository-url>
 cd furniture_shop_app
 ```
 
-### Bước 2: Cài đặt dependencies
+2. **Cài đặt dependencies**
 
 ```bash
 flutter pub get
 ```
 
-### Bước 3: Cấu hình API keys
+3. **Cấu hình API endpoint**
+
+    - Cập nhật API base URL trong file service configuration
+    - Chi tiết Project backend: [Link](https://github.com/yuika-sama/furniture-shop-backend)
+4. **Chạy ứng dụng**
 
 ```bash
-# Copy file template
-cp lib/constants/app_config.example.dart lib/constants/app_config.dart
-```
-
-Mở file `lib/constants/app_config.dart` và cập nhật:
-
-- `baseUrl`: URL backend API (mặc định: https://furniture-shop-backend.vercel.app)
-- `geminiApiKey`: API key của Google Gemini AI (lấy từ https://makersuite.google.com/app/apikey)
-
-**Chi tiết về cấu hình bảo mật, xem file app_config_sample**
-
-### Bước 4: Chạy ứng dụng
-
-```bash
-# Development
+# Chạy trên simulator/emulator
 flutter run
 
-# Build APK
-flutter build apk
+# Chạy trên device cụ thể
+flutter run -d <device-id>
 
-# Build iOS
-flutter build ios
+# Build release
+flutter build apk  # Android
+flutter build ios  # iOS
 ```
 
-## Cấu trúc dự án
+## 📦 Dependencies chính
 
-```
-lib/
-├── main.dart                    # Entry point
-├── components/                  # Reusable components
-│   ├── main_scaffold.dart      # Bottom navigation wrapper
-│   ├── product_card.dart       # Product display card
-│   └── ...
-├── constants/                   # Constants & configs
-│   ├── app_config.dart         # ⚠️ API keys (not in git)
-│   ├── app_config.example.dart # Template
-│   └── app_theme.dart          # Theme & colors
-├── models/                      # Data models
-│   ├── product_model.dart
-│   ├── order_model.dart
-│   ├── user_model.dart
-│   └── ...
-├── pages/                       # Screen pages
-│   ├── home_page.dart
-│   ├── product_detail_page.dart
-│   ├── cart_page.dart
-│   ├── checkout_page.dart
-│   ├── orders_page.dart
-│   ├── account_page.dart
-│   └── ...
-├── providers/                   # State management
-│   ├── auth_provider.dart
-│   ├── cart_provider.dart
-│   ├── product_provider.dart
-│   ├── order_provider.dart
-│   └── ...
-├── service/                     # API services
-│   ├── api_client.dart         # HTTP client
-│   ├── auth_service.dart
-│   ├── product_service.dart
-│   ├── order_service.dart
-│   ├── chat_service.dart       # Gemini AI
-│   └── ...
-└── utils/                       # Utilities
-    └── ...
-```
+### Core
 
-## Công nghệ sử dụng
+- `flutter`: SDK
+- `provider: ^6.1.2`: State management
+- `dio: ^5.9.0`: HTTP client
 
-### Framework & Language
+### UI/UX
 
-- **Flutter 3.5.4** - UI framework
-- **Dart 3.5.4** - Programming language
-
-### State Management
-
-- **Provider 6.1.2** - State management solution
-
-### Networking
-
-- **Dio 5.7.0** - HTTP client
-- **http** - Additional HTTP support
-
-### UI Components
-
-- **Material 3** - Design system
-- **cached_network_image** - Image caching
-- **flutter_native_splash** - Splash screen
-- **carousel_slider** - Image carousel
+- `cupertino_icons: ^1.0.8`: Icons
+- `model_viewer_plus: ^1.8.0`: 3D model viewer
+- `image_picker: ^1.0.7`: Chọn hình ảnh
 
 ### Storage & Security
 
-- **flutter_secure_storage** - Secure token storage
-- **shared_preferences** - Local preferences
+- `flutter_secure_storage: ^10.0.0`: Secure storage cho tokens
+- `shared_preferences: ^2.3.3`: Local preferences
+- `path_provider: ^2.1.5`: File system paths
 
-### AI & Chat
+### AI & Integration
 
-- **google_generative_ai 0.4.6** - Google Gemini AI integration
+- `google_generative_ai: 0.4.6`: Gemini AI chatbot
+- `url_launcher: ^6.2.4`: Mở URLs
+- `open_file: ^3.3.2`: Mở files
 
 ### Utilities
 
-- **intl 0.19.0** - Internationalization & date formatting
-- **url_launcher** - Launch URLs/phone/email
-- **image_picker** - Pick images from gallery/camera
-- **permission_handler** - Handle permissions
+- `permission_handler: ^11.0.0`: Quản lý permissions
+- `intl: ^0.20.2`: Internationalization
 
-### Development Tools
+## 🔧 Cấu hình
 
-- **flutter_lints** - Code analysis
+### Android
 
-## Bảo mật
+- Minimum SDK: 21
+- Target SDK: 34
+- Cấu hình permissions trong `AndroidManifest.xml`
 
-- API keys và URLs nhạy cảm **KHÔNG** được commit vào git
-- File `lib/constants/app_config.dart` nằm trong `.gitignore`
-- Sử dụng `flutter_secure_storage` để lưu access token
-- Production build sử dụng `--dart-define` để inject environment variables
-- Backend API
+### iOS
 
-Backend repository: [furniture-shop-backend](https://github.com/PhamHaThang/furniture-shop-backend)
+- Minimum iOS version: 12.0
+- Cấu hình permissions trong `Info.plist`
 
-API Documentation: Xem trong backend repository
+## 🎨 Features nổi bật
 
-Base URL (Production): https://furniture-shop-backend.vercel.app
+### 3D & AR Viewer
 
-## Nhóm phát triển
+Sử dụng `model_viewer_plus` để hiển thị sản phẩm dưới dạng 3D và AR, cho phép khách hàng xem sản phẩm một cách sinh động trước khi mua.
 
-BTL cuối kỳ môn Lập Trình Ứng Dụng Di Động
+### AI Chatbot
 
-- Thành viên 1: Nguyễn Đức Anh - B22DCPT009
-- Thành viên 2: Phạm Hà Thắng - B22DCPT261
-- Thành viên 3: Văn Thiên Phúc - B22DCPT209
+Tích hợp Google Gemini AI để cung cấp chatbot tư vấn thông minh, giúp khách hàng tìm hiểu về sản phẩm nội thất.
 
-## License
+### Secure Authentication
 
-Sản phẩm chỉ phục vụ cho mục đích học tập, giáo dục
+Sử dụng `flutter_secure_storage` để lưu trữ token authentication một cách an toàn, kết hợp với API interceptors để tự động refresh token.
 
-## Liên hệ
+## 🧪 Testing
 
-Nếu có câu hỏi hoặc góp ý, vui lòng liên hệ qua:
+```bash
+# Run tests
+flutter test
 
-- Email: nguyenanhduc2938@gmail.com
-- Facebook: fb.com/yonni1412
+# Run tests with coverage
+flutter test --coverage
+```
+
+## 📱 Screenshots
+
+_(Thêm screenshots của ứng dụng tại đây)_
+
+## 🤝 Đóng góp
+
+Dự án này là bài tập lớn cuối kỳ môn Lập trình App.
+
+## 📄 License
+
+Copyright © 2026. All rights reserved.
+
+## 👥 Tác giả
+
+_(Thêm thông tin tác giả tại đây)_
+
+## 📞 Liên hệ
+
+_(Thêm thông tin liên hệ tại đây)_
 
 ---
 
-**Lưu ý:** Đây là dự án học tập, không sử dụng cho mục đích thương mại.
+**Note**: Đây là dự án học tập, không dùng cho mục đích thương mại.
